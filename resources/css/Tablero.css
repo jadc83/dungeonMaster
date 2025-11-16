@@ -1,0 +1,366 @@
+/*
+ * ESTILOS GENERALES Y FUENTES
+ */
+.font-cinzel {
+    font-family: 'Cinzel Decorative', cursive;
+}
+
+.font-goudy {
+    font-family: 'Goudy Bookletter 1911', serif;
+}
+
+/*
+ * COMPONENTE TABLERO
+ */
+.tablero-wrapper {
+    display: flex;
+    gap: 20px;
+    font-family: 'Goudy Bookletter 1911', serif;
+    height: 100vh;
+    background: url('https://www.transparenttextures.com/patterns/wood-pattern.png') repeat;
+    color: #3e2d0a;
+    padding: 20px;
+    user-select: none;
+    /* Aplicado globalmente al wrapper */
+}
+
+/* Panel Izquierdo (Listas y Botón) */
+.panel-izquierda {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    max-height: 100vh;
+}
+
+.lista-titulo {
+    border-bottom: 2px solid #8a6d3e;
+    padding-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.reset-button {
+    background-color: #8a6d3e;
+    color: #f5f0e6;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-left: 10px;
+}
+
+.lista-scroll {
+    overflow-y: auto;
+    max-height: 40vh;
+    padding-right: 10px;
+}
+
+.lista-personajes {
+    list-style: none;
+    padding-left: 0;
+}
+
+.lista-personajes li {
+    margin-bottom: 10px;
+}
+
+.agregar-btn {
+    background-color: #8a6d3e;
+    color: #f5f0e6;
+    border: none;
+    padding: 4px 6px;
+    margin: 4px;
+    border-radius: 0;
+    cursor: pointer;
+}
+
+.lista-tablero {
+    list-style: none;
+    padding-left: 0;
+}
+
+.personaje-lista-item {
+    margin-bottom: 10px;
+    border-bottom: 1px solid #8a6d3e;
+    position: relative;
+    padding-left: 8px;
+    cursor: pointer;
+    transition: background-color 0.5s ease-in-out;
+}
+
+/* Estados dinámicos para la lista */
+.personaje-lista-item.seleccionado {
+    background-color: rgba(191, 146, 72, 0.5);
+}
+
+.personaje-lista-item.objetivo {
+    background-color: rgba(200, 0, 0, 0.3);
+}
+
+.personaje-lista-item.en-onda {
+    background-color: rgba(255, 255, 0, 0.3);
+}
+
+.atacar-btn {
+    margin-top: 20px;
+    background-color: #8a6d3e;
+    color: #f5f0e6;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 10px;
+    font-weight: bold;
+    cursor: pointer;
+    font-family: 'Cinzel Decorative', cursive;
+    box-shadow: 0 0 10px #bf9248;
+    transition: background-color 0.3s;
+}
+
+.atacar-btn:disabled {
+    background-color: #8a6d3e;
+    color: #a69f8e;
+    cursor: default;
+    box-shadow: none;
+}
+
+.atacar-btn.modo-ataque-activo {
+    background-color: #722f0a;
+}
+
+
+/* Panel Central (Mapa) */
+.tablero-mapa {
+    flex: 3;
+    height: 100vh;
+    border-radius: 15px;
+    border: 5px solid #6b4c1d;
+    position: relative;
+    overflow: hidden;
+    box-shadow: inset 0 0 100px 20px rgba(0, 0, 0, 0.6);
+}
+
+.personaje-token {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background-color: #654321;
+    color: #f5f0e6;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    position: absolute;
+    user-select: none;
+    padding: 4px;
+    font-size: 14px;
+    font-weight: bold;
+    text-shadow: 1px 1px 2px #000;
+    border: 2px solid #d4af37;
+    transition: box-shadow 0.3s, background-color 0.3s;
+}
+
+/* Estados dinámicos para el token */
+.personaje-token.seleccionado {
+    background-color: #2a5d1b;
+    box-shadow: 0 0 15px 4px rgba(191, 146, 72, 0.9);
+}
+
+.personaje-token.objetivo {
+    background-color: #bfa907;
+    box-shadow: 0 0 15px 4px rgba(191, 146, 72, 0.9);
+}
+
+.personaje-token.multiple {
+    background-color: #904e0b;
+    box-shadow: 0 0 15px 4px rgba(191, 146, 72, 0.9);
+}
+
+.personaje-token.no-cursor {
+    cursor: default;
+}
+
+/* Efecto de Ondas */
+.onda-efecto {
+    position: absolute;
+    top: -8px;
+    left: -8px;
+    width: 86px;
+    height: 86px;
+    border-radius: 50%;
+    border: 3px solid rgba(255, 255, 0, 0.7);
+    box-shadow: 0 0 10px 4px rgba(255, 255, 0, 0.5);
+    animation: ondas 2s infinite;
+    pointer-events: none;
+    z-index: 1;
+}
+
+@keyframes ondas {
+    0% {
+        transform: scale(0.9);
+        opacity: 1;
+    }
+
+    70% {
+        transform: scale(1.2);
+        opacity: 0.7;
+    }
+
+    100% {
+        transform: scale(1.5);
+        opacity: 0;
+    }
+}
+
+/* Panel Derecho (Info) */
+.panel-derecha {
+    margin-top: 20px;
+    padding: 10px;
+    flex: 1;
+    max-height: 100vh;
+    overflow-y: auto;
+}
+
+.info-titulo {
+    font-family: 'Cinzel Decorative', cursive;
+    color: #bf9248;
+    margin-bottom: 10px;
+}
+
+.info-personaje {
+    margin-bottom: 10px;
+    border: 2px solid #4b2e05;
+    border-radius: 10px;
+    padding: 15px;
+    background-color: #f5f0e6;
+    box-shadow: 4px 4px 8px #b4956a inset;
+}
+
+.info-personaje p {
+    margin: 0 0 5px 0;
+    /* Menos espaciado */
+}
+
+.info-personaje .nombre {
+    font-family: 'Cinzel Decorative', cursive;
+    font-weight: bold;
+    font-size: 1.1em;
+    margin-bottom: 10px;
+    color: #6b4c1d;
+}
+
+.info-multiple {
+    margin-bottom: 10px;
+    border: 2px solid #4b2e05;
+    border-radius: 10px;
+    padding: 15px;
+    background-color: #f5f0e6;
+    box-shadow: 4px 4px 8px #b4956a inset;
+    font-family: 'Cinzel Decorative', cursive;
+    font-weight: bold;
+    color: #6b4c1d;
+}
+
+/*
+ * COMPONENTE CREAR PERSONAJE
+ */
+.crear-personaje-container {
+  max-width: 800px; /* <-- CAMBIADO A 800px */
+  margin: 40px auto;
+  padding: 30px;
+  background: url('https://www.transparenttextures.com/patterns/wood-pattern.png') repeat;
+  border-radius: 15px;
+  border: 5px solid #6b4c1d;
+  box-shadow: 4px 4px 15px #b4956a inset;
+  font-family: 'Goudy Bookletter 1911', serif;
+  color: #3e2d0a;
+  text-align: left;
+}
+
+.crear-personaje-titulo {
+  font-family: 'Cinzel Decorative', cursive;
+  font-size: 2em;
+  color: #8a6d3e;
+  margin-bottom: 20px;
+  text-shadow: 1px 1px 2px #b4956a;
+}
+
+.form-grupo {
+  margin-bottom: 15px;
+}
+
+.form-label {
+  font-weight: bold;
+  display: block;
+  margin-bottom: 5px;
+}
+
+.form-input {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 5px;
+  border: 2px solid #6b4c1d;
+  font-family: 'Goudy Bookletter 1911', serif;
+  font-size: 16px;
+  box-sizing: border-box;
+  box-shadow: inset 0 0 5px rgba(0,0,0,0.1);
+  background-color: #f9f5e4;
+  color: #3e2d0a;
+}
+
+.form-submit-btn {
+  background-color: #8a6d3e;
+  color: #f5f0e6;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 10px;
+  font-weight: bold;
+  font-family: 'Cinzel Decorative', cursive;
+  font-size: 1.1em;
+  cursor: pointer;
+  box-shadow: 0 0 10px #bf9248;
+  transition: background-color 0.3s;
+  width: 100%;
+  margin-top: 10px;
+}
+
+.form-submit-btn:hover {
+  background-color: #722f0a;
+}
+
+.form-submit-btn:disabled {
+  background-color: #8a6d3e;
+  color: #a69f8e;
+  cursor: default;
+  box-shadow: none;
+}
+
+.error-texto {
+  color: red;
+  margin-top: 5px;
+}
+
+/* --- REGLAS NUEVAS AÑADIDAS --- */
+
+/* La nueva parrilla para el formulario */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* Dos columnas de igual tamaño */
+  gap: 20px 25px; /* Espacio vertical y horizontal */
+}
+
+/* Una clase para que un campo ocupe las 2 columnas */
+.form-grupo.span-2 {
+  grid-column: span 2;
+}
+
+/* El estilo para las explicaciones */
+.form-explicacion {
+  font-size: 0.9em;
+  color: #6b4c1d; /* Un color más suave */
+  margin-top: 5px;
+  padding-left: 2px;
+  font-family: 'Goudy Bookletter 1911', serif;
+  font-style: italic;
+  border-left: 3px solid #b4956a;
+  padding-left: 8px;
+}
