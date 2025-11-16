@@ -17,7 +17,7 @@ export const personajeService = {
   /**
    * Actualiza la posición de un personaje específico.
    * @param {string} personajeId - El ID del personaje a mover.
-   * @param {number} posX - La nueva coordenada X.
+   ** @param {number} posX - La nueva coordenada X.
    * @param {number} posY - La nueva coordenada Y.
    */
   updatePosicion: (personajeId, posX, posY) => {
@@ -27,16 +27,7 @@ export const personajeService = {
     });
   },
 
-  /**
-   * Resetea la posición de una lista de personajes a (0,0).
-   * @param {Array} personajes - Array de personajes a resetear.
-   */
-  resetAllPosiciones: (personajes) => {
-    const promesas = personajes.map(p =>
-      axios.patch(`/personajes/${p.id}`, { pos_x: 0, pos_y: 0 })
-    );
-    return Promise.all(promesas);
-  }, // <-- ¡AQUÍ FALTABA LA COMA!
+  // --- resetAllPosiciones() ELIMINADO ---
 
   /**
    * Actualiza un único stat de un personaje.
@@ -45,8 +36,6 @@ export const personajeService = {
    * @param {number} value - El nuevo valor del stat.
    */
   updateStat: (personajeId, stat, value) => {
-    // Usamos un nombre de clave dinámico: { [stat]: value }
-    // Esto enviará, por ejemplo: { "hp": 9 }
     return axios.patch(`/personajes/${personajeId}`, {
       [stat]: value
     });

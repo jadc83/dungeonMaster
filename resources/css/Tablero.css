@@ -109,7 +109,7 @@
     text-shadow: 1px 1px 2px #000;
     border: 2px solid #d4af37;
     transition: box-shadow 0.3s, background-color 0.3s;
-    /* Añadidos para el menú y el canvas */
+    /* Añadido para el menú y el canvas */
     position: relative;
 }
 
@@ -171,6 +171,67 @@
     box-shadow: 0 0 30px 30px rgba(255, 0, 0, 0);
     opacity: 0;
   }
+}
+
+/* Animación de Pulso del ATACANTE (Azul/Blanco) */
+.attacker-pulse-effect {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 70px;  /* Tamaño del token */
+  height: 70px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+
+  /* Animación: 0.7s, una vez */
+  animation: shockwave-attacker 0.7s forwards ease-out;
+
+  box-sizing: border-box;
+  pointer-events: none;
+  z-index: 16; /* Por encima de la onda roja (15) */
+}
+
+@keyframes shockwave-attacker {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    /* Un glow BLANCO/AZULADO intenso */
+    box-shadow: 0 0 10px 5px rgba(255, 255, 255, 0.9),
+                0 0 15px 10px rgba(0, 150, 255, 0.7);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.8);
+    /* Se desvanece */
+    box-shadow: 0 0 30px 25px rgba(0, 150, 255, 0);
+    opacity: 0;
+  }
+}
+
+/* Icono de Ataque de Proximidad */
+.attack-icon {
+  position: absolute;
+  top: -25px; /* Lo coloca justo encima del token */
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 24px; /* Tamaño del emoji */
+  cursor: crosshair; /* Cursor de ataque */
+  z-index: 30; /* Por encima de todo, incluso de la onda */
+
+  /* Animación para llamar la atención */
+  animation: pulse-attack-icon 1.2s infinite ease-in-out;
+
+  /* Filtro para que brille rojo y sea visible */
+  filter: drop-shadow(0 0 3px rgba(255, 0, 0, 1)) drop-shadow(0 0 6px rgba(255, 0, 0, 0.7));
+}
+
+.attack-icon:hover {
+  filter: drop-shadow(0 0 5px white) drop-shadow(0 0 10px red);
+}
+
+@keyframes pulse-attack-icon {
+  0% { transform: translateX(-50%) scale(1); }
+  50% { transform: translateX(-50%) scale(1.3); }
+  100% { transform: translateX(-50%) scale(1); }
 }
 
 /* Panel Derecho (Info) */
@@ -329,7 +390,7 @@
 
 .pj-card {
   display: flex;
-  align-items: center;
+  align-items: flex-start; /* Alinea avatar y pestañas arriba */
   gap: 10px;
   padding: 8px;
   margin-bottom: 8px;
@@ -338,8 +399,8 @@
   border: 1px solid #6b4c1d;
   cursor: pointer;
   transition: all 0.3s;
-  position: relative; /* Para el overlay 'MUERTO' */
-  overflow: hidden; /* Para el overlay 'MUERTO' */
+  position: relative;
+  overflow: hidden;
 }
 
 /* Efectos de hover/seleccionado */
@@ -433,10 +494,10 @@
   top: 0;
   left: 0;
   text-align: center;
-  font-size: 11px; /* <-- Un poco más grande */
+  font-size: 11px;
   font-weight: bold;
-  color: white;
-  text-shadow: 1px 1px 1px #000;
+  color: black; /* <-- CAMBIADO A NEGRO */
+  text-shadow: 1px 1px 2px rgba(255,255,255,0.7); /* Sombra clara */
   line-height: 20px; /* <-- Centrado vertical */
 }
 
@@ -549,8 +610,6 @@
 
 .menu-circular-container {
   position: absolute;
-  /* La posición (x, y) se pone con style={} y es el centro del token */
-  /* --- ¡HEMOS QUITADO EL TRANSFORM DE AQUÍ! --- */
   z-index: 101;
   pointer-events: none;
 }
@@ -575,11 +634,9 @@
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
   pointer-events: auto;
 
-  /* --- ESTADO INICIAL (Centrado y Oculto) --- */
   opacity: 0;
-  transform: translate(-50%, -50%) scale(0.3); /* ¡Centrado en sí mismo y pequeño! */
+  transform: translate(-50%, -50%) scale(0.3);
 
-  /* Animamos la opacidad y la posición */
   animation: menuItem-fade-in 0.2s forwards ease-out;
   transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
@@ -590,10 +647,6 @@
   to   { opacity: 1; }
 }
 
-/* *
- * ESTADO FINAL (Abierto)
- * Ahora, todos los transforms INCLUYEN el translate(-50%, -50%)
-*/
 .menu-item-1 {
   /* Arriba */
   transform: translate(-50%, -50%) translateY(-80px) scale(1);
@@ -622,7 +675,6 @@
 /* --- Animación de Salida --- */
 .menu-item.closing {
   opacity: 0;
-  /* Vuelve al estado inicial (centrado y pequeño) */
   transform: translate(-50%, -50%) scale(0.3);
   transition: transform 0.2s ease-in, opacity 0.2s ease-in;
 }
@@ -630,12 +682,10 @@
 /* --- BANNER MODO ATAQUE --- */
 .attack-mode-banner {
   position: absolute;
-  top: 20px; /* Posición final: en lo alto */
+  top: 20px;
   left: 50%;
-
-  /* Estilo del cartel */
   padding: 10px 30px;
-  background-color: #c0392b; /* Rojo sangre */
+  background-color: #c0392b;
   color: white;
   font-family: 'Cinzel Decorative', cursive;
   font-size: 2em;
@@ -643,28 +693,23 @@
   text-shadow: 2px 2px 4px #000;
   border: 3px solid #f5f0e6;
   border-radius: 10px;
-  box-shadow: 0 0 20px 10px rgba(255, 0, 0, 0.5); /* Glow rojo */
-  z-index: 200; /* Por encima de todo */
-
-  /* Animación de ENTRADA */
+  box-shadow: 0 0 20px 10px rgba(255, 0, 0, 0.5);
+  z-index: 200;
   animation: spinInAndSettle 0.8s forwards cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 @keyframes spinInAndSettle {
   0% {
-    /* Empieza en el centro, pequeño y girando */
     transform: translateX(-50%) scale(0.1) rotate(0deg);
     opacity: 0;
     top: 50%;
   }
   60% {
-    /* Da dos vueltas (720deg) mientras crece */
     transform: translateX(-50%) scale(1.2) rotate(720deg);
     opacity: 1;
     top: 50%;
   }
   100% {
-    /* Se "planta" en lo alto */
     transform: translateX(-50%) scale(1) rotate(720deg);
     opacity: 1;
     top: 20px;
@@ -673,7 +718,6 @@
 
 /* Animación de SALIDA */
 .attack-mode-banner.closing {
-  /* 'forwards' es clave: se queda en el estado final (oculto) */
   animation: fadeOutBanner 0.5s forwards ease-out;
 }
 
@@ -684,38 +728,14 @@
     top: 20px;
   }
   to {
-    /* Se va hacia arriba y desaparece */
     transform: translateX(-50%) scale(0.8);
     opacity: 0;
     top: -50px;
   }
 }
-.attack-icon {
-  position: absolute;
-  top: -25px; /* Lo coloca justo encima del token */
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 24px; /* Tamaño del emoji */
-  cursor: crosshair; /* Cursor de ataque */
-  z-index: 30; /* Por encima de todo, incluso de la onda */
 
-  /* Animación para llamar la atención */
-  animation: pulse-attack-icon 1.2s infinite ease-in-out;
-
-  /* Filtro para que brille rojo y sea visible */
-  filter: drop-shadow(0 0 3px rgba(255, 0, 0, 1)) drop-shadow(0 0 6px rgba(255, 0, 0, 0.7));
-}
-
-.attack-icon:hover {
-  filter: drop-shadow(0 0 5px white) drop-shadow(0 0 10px red);
-}
-
-@keyframes pulse-attack-icon {
-  0% { transform: translateX(-50%) scale(1); }
-  50% { transform: translateX(-50%) scale(1.3); }
-  100% { transform: translateX(-50%) scale(1); }
-}
-.execute-attack-btn {
+/* --- BOTÓN DE ATAQUE DE PROXIMIDAD (Rediseñado) --- */
+.proximity-attack-btn {
   /* Usamos los mismos estilos que .atacar-btn */
   margin-top: 10px; /* Un poco de espacio */
   background-color: #c0392b; /* Rojo sangre (del banner) */
@@ -731,79 +751,132 @@
   width: 100%; /* Ancho completo */
 }
 
-.execute-attack-btn:hover {
+.proximity-attack-btn:hover {
   background-color: #e74c3c; /* Rojo más brillante */
   transform: scale(1.02);
 }
 
-@keyframes pulse-attack-btn {
-  0% {
-    transform: scale(1);
-    box-shadow: 0 0 10px 0 rgba(255, 0, 0, 0.7);
-  }
-  50% {
-    transform: scale(1.02);
-    box-shadow: 0 0 20px 10px rgba(255, 0, 0, 0.7);
-  }
-  100% {
-    transform: scale(1);
-    box-shadow: 0 0 10px 0 rgba(255, 0, 0, 0.7);
-  }
+/* --- Pestañas de la Tarjeta (IZQUIERDA) --- */
+.pj-card-main-content {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
 }
-.attacker-pulse-effect {
+
+.pj-card-tabs {
+  display: flex;
+  width: 100%;
+  margin-bottom: 5px;
+}
+
+/* --- ESTILO DE PESTAÑA CORREGIDO (TEXTO NEGRO) --- */
+.tab-button {
+  flex-grow: 1;
+  padding: 4px 5px;
+  font-size: 10px;
+  font-weight: bold;
+  font-family: 'Cinzel Decorative', cursive;
+  color: #000; /* <-- ¡TEXTO EN NEGRO! */
+  background-color: rgba(0,0,0,0.1);
+  border: none;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+  /* Sombra clara para que destaque sobre el fondo de madera */
+  text-shadow: 1px 1px 1px rgba(255, 255, 255, 0.4);
+}
+
+.tab-button:not(:first-child) {
+  border-left: 1px solid #6b4c1d; /* Separador */
+}
+
+/* --- HOVER CORREGIDO --- */
+.tab-button:hover {
+  color: #000; /* Mantiene el negro */
+  background-color: rgba(255, 255, 255, 0.1); /* Un leve brillo */
+}
+
+.tab-button.active {
+  color: #f5f0e6; /* Texto claro en la pestaña activa */
+  background-color: rgba(138, 109, 62, 0.3);
+  border-bottom-color: #d4af37;
+  text-shadow: none; /* Sin sombra en la activa */
+}
+
+.tab-button:disabled {
+  color: #3e2d0a;
+  background-color: rgba(0,0,0,0.2);
+  cursor: not-allowed;
+}
+
+/* Contenido de la pestaña */
+.pj-card-tab-content {
+  width: 100%;
+}
+
+.pj-card-blank {
+  width: 100%;
+  height: 80px; /* Altura fija para que la tarjeta no "salte" */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-style: italic;
+  color: #b4956a;
+  font-size: 12px;
+  border: 1px dashed #6b4c1d;
+  border-radius: 5px;
+}
+.map-grid-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); /* Parrilla responsive */
+  gap: 15px;
+  margin-top: 20px;
+  max-height: 40vh; /* Scroll si hay muchos mapas */
+  overflow-y: auto;
+  padding: 5px;
+  background-color: rgba(0,0,0,0.2);
+  border-radius: 8px;
+}
+
+/* Estilo de cada miniatura */
+.map-thumbnail {
+  border: 4px solid #6b4c1d; /* Borde temático */
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  position: relative;
+}
+
+.map-thumbnail img {
+  width: 100%;
+  height: 100px;
+  object-fit: cover; /* Rellena el espacio */
+  display: block;
+}
+
+/* Nombre del mapa superpuesto */
+.map-thumbnail span {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 70px;  /* Tamaño del token */
-  height: 70px;
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-
-  /* Animación: 0.7s, una vez */
-  animation: shockwave-attacker 0.7s forwards ease-out;
-
-  box-sizing: border-box;
-  pointer-events: none;
-  z-index: 16; /* Por encima de la onda roja (15) */
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background-color: rgba(0,0,0,0.7);
+  color: white;
+  font-family: 'Cinzel Decorative', cursive;
+  font-size: 12px;
+  text-align: center;
+  padding: 4px 0;
 }
 
-@keyframes shockwave-attacker {
-  0% {
-    transform: translate(-50%, -50%) scale(1);
-    /* Un glow BLANCO/AZULADO intenso */
-    box-shadow: 0 0 10px 5px rgba(255, 255, 255, 0.9),
-                0 0 15px 10px rgba(0, 150, 255, 0.7);
-    opacity: 1;
-  }
-  100% {
-    transform: translate(-50%, -50%) scale(1.8);
-    /* Se desvanece */
-    box-shadow: 0 0 30px 25px rgba(0, 150, 255, 0);
-    opacity: 0;
-  }
-}
-.attack-icon {
-  position: absolute;
-  top: -25px; /* Lo coloca justo encima del token */
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 24px; /* Tamaño del emoji */
-  cursor: crosshair; /* Cursor de ataque */
-  z-index: 30; /* Por encima de todo, incluso de la onda */
-
-  /* Animación para llamar la atención */
-  animation: pulse-attack-icon 1.2s infinite ease-in-out;
-
-  /* Filtro para que brille rojo y sea visible */
-  filter: drop-shadow(0 0 3px rgba(255, 0, 0, 1)) drop-shadow(0 0 6px rgba(255, 0, 0, 0.7));
+.map-thumbnail:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 15px #d4af37;
 }
 
-.attack-icon:hover {
-  filter: drop-shadow(0 0 5px white) drop-shadow(0 0 10px red);
-}
-
-@keyframes pulse-attack-icon {
-  0% { transform: translateX(-50%) scale(1); }
-  50% { transform: translateX(-50%) scale(1.3); }
-  100% { transform: translateX(-50%) scale(1); }
+/* Estilo para el mapa activo */
+.map-thumbnail.active {
+  border-color: #d4af37; /* Borde dorado brillante */
+  box-shadow: 0 0 20px 5px #d4af37;
 }

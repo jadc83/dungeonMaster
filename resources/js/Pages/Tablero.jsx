@@ -7,9 +7,17 @@ import InfoPersonaje from './InfoPersonaje';
 import { calcularDistancia, calcularOndas as calcularOndasUtil } from '../utils/logicaTablero';
 import { personajeService } from '../services/personajeService';
 import PersonajeCanvas from './PersonajeCanvas';
+import PersonajeCard from './PersonajeCard';
 
 // Constantes del Token
 const TOKEN_CENTER_OFFSET = 35;
+
+// --- ¡LISTA DE MAPAS DISPONIBLES! ---
+const MAP_LIST = [
+  { name: 'La Taberna', path: '/mapa.jpg' },
+  { name: 'Exterior (Bosque)', path: '/mapa2.jpg' },
+  // Puedes añadir más aquí, ej: { name: 'Cripta', path: '/cripta.jpg' }
+];
 
 function Tablero() {
   const [personajes, setPersonajes] = useState([]);
@@ -26,11 +34,13 @@ function Tablero() {
   const [bannerVisible, setBannerVisible] = useState(false);
   const [bannerClosing, setBannerClosing] = useState(false);
   const [attackerPulseKey, setAttackerPulseKey] = useState(null);
+  const [isAvailableListOpen, setIsAvailableListOpen] = useState(true);
+
+  // --- ¡NUEVOS ESTADOS PARA EL MAPA! ---
+  const [currentMap, setCurrentMap] = useState(MAP_LIST[0].path); // Mapa actual
+  const [isMapModalOpen, setIsMapModalOpen] = useState(false); // Visibilidad del modal
 
   const mapaRef = useRef(null);
-
-  // --- ¡BANDERA PARA EVITAR DOBLE CLIC! ---
-  const attackFlag = useRef(false);
 
   useEffect(() => {
     async function fetchPersonajes() {
@@ -54,8 +64,6 @@ function Tablero() {
   }, [modoAtaque]);
 
 
-  // --- ¡LÓGICA DE ONDAS CORREGIDA! ---
-  // Las ondas ahora dependen del ATACANTE seleccionado
   useEffect(() => {
     if (!selectedPersonajeId) {
       setOndasIds([]);
@@ -70,7 +78,7 @@ function Tablero() {
     const timestamp = Date.now();
     const ondasConTimestamp = idsEnRango.map(id => ({ id: id, timestamp: timestamp }));
     setOndasIds(ondasConTimestamp);
-  }, [selectedPersonajeId, personajesEnTablero]); // Se actualiza si el atacante o las posiciones cambian
+  }, [selectedPersonajeId, personajesEnTablero]);
 
 
   const cerrarMenuCircular = (force = false) => {
@@ -107,7 +115,6 @@ function Tablero() {
     } catch (error) {
       console.error("Error actualizando posición", error);
     }
-    // Ya no calculamos ondas aquí
   };
 
   const agregarAPersonajeEnTablero = (personaje) => {
@@ -116,7 +123,7 @@ function Tablero() {
     }
   };
 
-  const calcularOndas = () => {}; // No se usa
+  const calcularOndas = () => {};
 
   useEffect(() => {
     if (modoAtaque && selectedPersonajeId && objetivoPersonajeId) {
@@ -242,26 +249,7 @@ function Tablero() {
     }
   };
 
-  const resetearPosiciones = async () => {
-    const pin = prompt("Introduce el pin para resetear posiciones:");
-    if (pin !== "1234") {
-      alert("Pin incorrecto");
-      return;
-    }
-    const nuevoEstado = personajesEnTablero.map((p) => ({
-      ...p,
-      pos_x: 0,
-      pos_y: 0,
-    }));
-    setPersonajesEnTablero(nuevoEstado);
-    try {
-      await personajeService.resetAllPosiciones(nuevoEstado);
-    } catch (error) {
-      console.error("Error actualizando posición en DB", error);
-    }
-    setOndasIds([]);
-    cerrarMenuCircular();
-  };
+  // --- resetearPosiciones() ELIMINADO ---
 
   const atacante = personajesEnTablero.find((p) => p.id === selectedPersonajeId);
   const objetivo = personajesEnTablero.find((p) => p.id === objetivoPersonajeId);
@@ -347,22 +335,24 @@ function Tablero() {
     }
   };
 
-  // --- ¡LÓGICA DE ATAQUE DE PROXIMIDAD (CORREGIDA)! ---
-  const handleAtaqueProximidad = (e, targetId) => {
-    e.stopPropagation(); // Detiene el burbujeo
-
-    // 1. Levantamos la bandera para que el clic del padre no se ejecute
-    attackFlag.current = true;
-
-    // 2. Comprobamos si estamos en modo ataque y tenemos un atacante
-    if (!modoAtaque || !selectedPersonajeId) {
-      alert("Debes estar en modo ataque para atacar.");
+  const handleEjecutarAtaque = () => {
+    if (!modoAtaque || !atacante || !objetivo) {
+      alert("Debes seleccionar un atacante y un objetivo válido.");
       return;
     }
 
-    // 3. Ejecutamos el daño
-    console.log(`Atacando (por proximidad) a: ${targetId}`);
-    handleStatChange(null, targetId, 'hp', -1); // 'null' porque no necesitamos el evento
+    const isEnRango = ondasIds.some(onda => onda.id === objetivo.id);
+    if (!isEnRango) {
+      alert(`${objetivo.nombre} está fuera de rango.`);
+      return;
+    }
+
+    console.log(`Atacando a: ${objetivo.nombre}`);
+    handleStatChange(null, objetivo.id, 'hp', -1);
+
+    // Reseteamos el objetivo, pero seguimos en modo ataque
+    setObjetivoPersonajeId(null);
+    setDistancia(null);
   };
 
 
@@ -371,202 +361,150 @@ function Tablero() {
       className="tablero-wrapper"
       style={{ userSelect: modoSeleccionMultiple ? "none" : "auto" }}
     >
+      {/* --- PANEL IZQUIERDO REESTRUCTURADO --- */}
       <div className="panel-izquierda">
 
-        {/* --- LISTA 1: PERSONAJES DISPONIBLES (CON DAISYUI) --- */}
-        <h3 className="lista-titulo">
-          Lista de personajes
-          <div>
-            <Link
-              href="/personajes/crear"
-              className="reset-button"
-              style={{ marginRight: '10px' }}
-            >
-              Crear Personaje
-            </Link>
-            <button
-              onClick={resetearPosiciones}
-              className="reset-button"
-            >
-              Resetear posiciones
-            </button>
-          </div>
-        </h3>
-        <div className="lista-scroll">
-          <div className="flex flex-col gap-2">
-            {personajes.map((p) => (
-              <div
-                key={p.id}
-                className="flex justify-between items-center p-2 rounded-lg transition-all hover:bg-black/20"
-                style={{
-                  backgroundColor: 'rgba(0,0,0,0.1)',
-                  border: '1px solid #6b4c1d'
-                }}
+        {/* --- 1. SECCIÓN FIJA SUPERIOR (Controles) --- */}
+        <div style={{ flexShrink: 0, paddingBottom: '10px', borderBottom: '2px solid #8a6d3e' }}>
+
+          {/* Título y Botones de Creación/Mapa */}
+          <h3 className="lista-titulo" style={{ marginBottom: '10px' }}>
+            <span>Controles</span>
+            <div className="flex gap-2"> {/* Agrupamos botones */}
+              <Link
+                href="/personajes/crear"
+                className="reset-button"
+                onClick={(e) => e.stopPropagation()}
               >
-                <div>
-                  <span className="font-bold text-sm">{p.nombre}</span>
-                  <span className="text-xs italic block opacity-80" style={{color: '#d4af37'}}>
-                    {p.profesion}
-                  </span>
-                </div>
-                <button
-                  className="btn btn-primary btn-sm btn-circle"
-                  onClick={() => agregarAPersonajeEnTablero(p)}
-                  aria-label={`Añadir a ${p.nombre}`}
-                  disabled={personajesEnTablero.find(pj => pj.id === p.id)}
-                >
-                  +
-                </button>
-              </div>
-            ))}
+                Crear Personaje
+              </Link>
+              {/* --- ¡NUEVO BOTÓN CAMBIAR MAPA! --- */}
+              <button
+                onClick={() => setIsMapModalOpen(true)}
+                className="reset-button"
+              >
+                Cambiar Mapa
+              </button>
+            </div>
+          </h3>
+
+          {/* Botones de Acción */}
+          <div className="flex gap-2">
+            <button
+              onClick={toggleModoAtaque}
+              disabled={!selectedPersonajeId}
+              className={`atacar-btn ${modoAtaque ? "modo-ataque-activo" : ""}`}
+              style={{flexGrow: 1}} // Ocupa espacio
+            >
+              {modoAtaque ? "Salir de Ataque" : "Atacar"}
+            </button>
+
+            {modoAtaque && objetivoPersonajeId && (
+              <button
+                className="execute-attack-btn"
+                onClick={handleEjecutarAtaque}
+                style={{flexGrow: 1}}
+              >
+                ⚔️ ¡Confirmar Ataque!
+              </button>
+            )}
           </div>
         </div>
-        {/* --- FIN DE LA LISTA 1 --- */}
 
+        {/* --- 2. SECCIÓN SCROLLABLE INFERIOR (Listas) --- */}
+        <div style={{ flexGrow: 1, overflowY: 'auto', paddingTop: '10px' }}>
 
-        {/* --- LISTA 2: PERSONAJES EN JUEGO (¡CON BOTONES Y LÓGICA DE MUERTE!) --- */}
-        <h3 className="lista-titulo" style={{ marginTop: 20 }}>
-          Personajes en el tablero
-        </h3>
-        <div className="lista-scroll">
-          <ul className="lista-tablero">
-            {personajesEnTablero.map((p) => {
+          {/* --- LISTA 1: PERSONAJES DISPONIBLES (COLAPSABLE) --- */}
+          <h3
+            className="lista-titulo"
+            onClick={() => setIsAvailableListOpen(!isAvailableListOpen)}
+            style={{ cursor: 'pointer', userSelect: 'none', borderTop: '2px solid #8a6d3e', paddingTop: '10px' }}
+          >
+            <span>
+              {isAvailableListOpen ? '▼' : '►'}{" "}
+              Personajes Disponibles
+            </span>
+          </h3>
 
-              const hpMax = p.hp_maximo || 10;
-              const mpMax = p.mp_maximo || 10;
-              const corduraMax = p.cordura_maxima || 99;
-
-              const hpPercent = (p.hp / hpMax) * 100;
-              const mpPercent = (p.mp / mpMax) * 100;
-              const corduraPercent = (p.cordura / corduraMax) * 100;
-
-              const isDead = p.hp <= 0;
-
-              return (
-                <li
-                  key={p.id}
-                  className={`
-                    pj-card
-                    ${modoAtaque && p.id === objetivoPersonajeId ? "objetivo" : ""}
-                    ${p.id === selectedPersonajeId ? "seleccionado" : ""}
-                    ${isDead ? "dead" : ""}
-                  `}
-                  onClick={() => !isDead && manejarClickListaPersonaje(p.id)}
-                >
-                  {isDead && (
-                    <div className="dead-container">
-                      <span className="dead-text">MUERTO</span>
-                      <button
-                        className="resucitar-btn"
-                        onClick={(e) => handleResucitar(e, p.id)}
-                      >
-                        Resucitar
-                      </button>
-                    </div>
-                  )}
-
-                  <img
-                    src={p.avatar_url || '/token.png'}
-                    alt={p.nombre}
-                    className="pj-card-avatar"
-                  />
-                  <div className="pj-card-stats">
-                    <div className="stat-row">
-                      <button
-                        className="stat-button"
-                        onClick={(e) => handleStatChange(e, p.id, 'hp', -1)}
-                        disabled={p.hp <= 0}
-                      >
-                        -
-                      </button>
-                      <div className="stat-bar-bg">
-                        <div
-                          className="stat-bar-fill hp"
-                          style={{ width: `${hpPercent}%` }}
-                        ></div>
-                        <span className="stat-bar-text">HP: {p.hp}/{hpMax}</span>
+          {isAvailableListOpen && (
+            <div className="lista-scroll" style={{marginTop: '10px', maxHeight: '25vh'}}>
+              <div className="flex flex-col gap-2">
+                {personajes
+                  .filter(p => !personajesEnTablero.find(pj => pj.id === p.id))
+                  .map((p) => (
+                    <div
+                      key={p.id}
+                      className="flex justify-between items-center p-2 rounded-lg transition-all hover:bg-black/20"
+                      style={{
+                        backgroundColor: 'rgba(0,0,0,0.1)',
+                        border: '1px solid #6b4c1d'
+                      }}
+                    >
+                      <div>
+                        <span className="font-bold text-sm">{p.nombre}</span>
+                        <span className="text-xs italic block opacity-80" style={{color: '#d4af37'}}>
+                          {p.profesion}
+                        </span>
                       </div>
                       <button
-                        className="stat-button"
-                        onClick={(e) => handleStatChange(e, p.id, 'hp', 1)}
-                        disabled={isDead || p.hp >= hpMax}
+                        className="agregar-btn text-xl"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            agregarAPersonajeEnTablero(p);
+                        }}
+                        aria-label={`Añadir a ${p.nombre}`}
                       >
                         +
                       </button>
                     </div>
-                    <div className="stat-row">
-                      <button
-                        className="stat-button"
-                        onClick={(e) => handleStatChange(e, p.id, 'mp', -1)}
-                        disabled={isDead || p.mp <= 0}
-                      >
-                        -
-                      </button>
-                      <div className="stat-bar-bg">
-                        <div
-                          className="stat-bar-fill mp"
-                          style={{ width: `${mpPercent}%` }}
-                        ></div>
-                        <span className="stat-bar-text">MP: {p.mp}/{mpMax}</span>
-                      </div>
-                      <button
-                        className="stat-button"
-                        onClick={(e) => handleStatChange(e, p.id, 'mp', 1)}
-                        disabled={isDead || p.mp >= mpMax}
-                      >
-                        +
-                      </button>
-                    </div>
-                    <div className="stat-row">
-                      <button
-                        className="stat-button"
-                        onClick={(e) => handleStatChange(e, p.id, 'cordura', -1)}
-                        disabled={isDead || p.cordura <= 0}
-                      >
-                        -
-                      </button>
-                      <div className="stat-bar-bg">
-                        <div
-                          className="stat-bar-fill cordura"
-                          style={{ width: `${corduraPercent}%` }}
-                        ></div>
-                        <span className="stat-bar-text">COR: {p.cordura}/{corduraMax}</span>
-                      </div>
-                      <button
-                        className="stat-button"
-                        onClick={(e) => handleStatChange(e, p.id, 'cordura', 1)}
-                        disabled={isDead || p.cordura >= corduraMax}
-                      >
-                        +
-                      </button>
-                    </div>
+                ))}
+
+                {personajes.filter(p => !personajesEnTablero.find(pj => pj.id === p.id)).length === 0 && (
+                  <div className="text-xs italic opacity-80 text-center" style={{color: '#d4af37', padding: '10px'}}>
+                    No hay más personajes disponibles.
                   </div>
-                </li>
-              );
-            })}
-          </ul>
+                )}
+              </div>
+            </div>
+          )}
+          {/* --- FIN DE LA LISTA 1 --- */}
+
+
+          {/* --- LISTA 2: PERSONAJES EN JUEGO (SIEMPRE VISIBLE) --- */}
+          <h3 className="lista-titulo" style={{ marginTop: 20 }}>
+            Personajes en el tablero
+          </h3>
+          <div className="lista-scroll" style={{maxHeight: 'none'}}>
+            <ul className="lista-tablero">
+              {personajesEnTablero.map((p) => (
+                  <PersonajeCard
+                    key={p.id}
+                    p={p}
+                    isDead={p.hp <= 0}
+                    isSelected={p.id === selectedPersonajeId}
+                    isObjetivo={modoAtaque && p.id === objetivoPersonajeId}
+                    onClick={() => !(p.hp <= 0) && manejarClickListaPersonaje(p.id)}
+                    onStatChange={handleStatChange}
+                    onResucitar={handleResucitar}
+                  />
+              ))}
+            </ul>
+          </div>
+          {/* --- FIN DE LA LISTA 2 --- */}
+
         </div>
-        {/* --- FIN DE LA LISTA 2 --- */}
+      </div> {/* --- FIN DEL PANEL IZQUIERDO --- */}
 
-        <button
-          onClick={toggleModoAtaque}
-          disabled={modoSeleccionMultiple || !selectedPersonajeId}
-          className={`atacar-btn ${modoAtaque ? "modo-ataque-activo" : ""}`}
-        >
-          {modoAtaque ? "Salir de Ataque" : "Atacar"}
-        </button>
 
-        {/* --- Botón de Proximidad ELIMINADO de aquí --- */}
-
-      </div>
-
+      {/* --- INICIO DEL MAPA (¡MODIFICADO!) --- */}
       <div
         ref={mapaRef}
         className="tablero-mapa"
         onClick={manejarClickTablero}
         onContextMenu={manejarClickTablero}
         style={{
-          backgroundImage: "url('/mapa.jpg')",
+          // --- ¡BACKGROUNDIMAGE AHORA ES DINÁMICO! ---
+          backgroundImage: `url('${currentMap}')`,
           backgroundSize: 'cover',
           backgroundPosition: 'center center',
           backgroundRepeat: 'no-repeat',
@@ -631,24 +569,12 @@ function Tablero() {
               <div
                 onClick={(e) => {
                   e.stopPropagation();
-
-                  // --- ¡LÓGICA DE CLIC CON BANDERA! ---
-                  // 1. Revisar la bandera. Si es 'true', significa que el icono ⚔️
-                  // ya se encargó de este clic, así que la reseteamos y no hacemos nada.
-                  if (attackFlag.current === true) {
-                    attackFlag.current = false; // Resetea la bandera
-                    return;
-                  }
-
-                  // 2. Si la bandera es 'false', continuamos con la lógica normal
                   if (isDead) return;
                   if (modoSeleccionMultiple) return;
 
                   if (modoAtaque) {
-                    // Si estamos en modo ataque, un clic SIEMPRE es para seleccionar objetivo
                     manejarClickPersonajeEnAtaque(p.id);
                   } else {
-                    // Si no, es para seleccionar un atacante/personaje
                     seleccionarPersonaje(p.id);
                   }
                 }}
@@ -673,18 +599,6 @@ function Tablero() {
               >
                 <PersonajeCanvas personaje={p} />
 
-                {/* --- ¡ICONO DE ATAQUE (VUELVE AQUÍ)! --- */}
-                {modoAtaque && isEnRango && (
-                  <div
-                    className="attack-icon"
-                    onClick={(e) => handleAtaqueProximidad(e, p.id)}
-                    title="Atacar por proximidad"
-                  >
-                    ⚔️
-                  </div>
-                )}
-
-                {/* Pulso del Atacante (cuando entra en modo ataque) */}
                 {p.id === selectedPersonajeId && attackerPulseKey && (
                   <span
                     key={attackerPulseKey}
@@ -692,7 +606,6 @@ function Tablero() {
                   />
                 )}
 
-                {/* Onda de Rango (en los objetivos) */}
                 {isEnRango && (
                   <span
                     key={ondaInfo.timestamp}
@@ -705,8 +618,8 @@ function Tablero() {
         })}
       </div>
 
+      {/* --- PANEL DERECHO --- */}
       <div className="panel-derecha">
-        {/* ... (panel derecho) ... */}
         {modoSeleccionMultiple ? (
           <>
             <h3 className="info-titulo">
@@ -747,6 +660,44 @@ function Tablero() {
           </>
         )}
       </div>
+
+      {/* --- ¡NUEVO MODAL PARA CAMBIAR MAPA! --- */}
+      {/* Usamos las clases de DaisyUI para el modal */}
+      {isMapModalOpen && (
+        <dialog className="modal modal-open">
+          <div className="modal-box" style={{backgroundColor: '#f5f0e6', border: '3px solid #6b4c1d'}}>
+            <h3 className="font-bold text-lg" style={{fontFamily: "'Cinzel Decorative', cursive", color: '#3e2d0a'}}>
+              Seleccionar Escenario
+            </h3>
+
+            <div className="map-grid-container">
+              {MAP_LIST.map(map => (
+                <div
+                  key={map.path}
+                  // Aplicamos la clase 'active' si es el mapa actual
+                  className={`map-thumbnail ${currentMap === map.path ? 'active' : ''}`}
+                  onClick={() => {
+                    setCurrentMap(map.path); // Cambia el mapa
+                    setIsMapModalOpen(false); // Cierra el modal
+                  }}
+                >
+                  <img src={map.path} alt={map.name} />
+                  <span>{map.name}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="modal-action">
+              <button className="reset-button" onClick={() => setIsMapModalOpen(false)}>Cerrar</button>
+            </div>
+          </div>
+          {/* Cierra el modal si se pincha fuera */}
+          <form method="dialog" className="modal-backdrop">
+            <button onClick={() => setIsMapModalOpen(false)}>close</button>
+          </form>
+        </dialog>
+      )}
+
     </div>
   );
 }

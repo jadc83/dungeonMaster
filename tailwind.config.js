@@ -16,9 +16,9 @@ export default {
                 sans: ['Figtree', ...defaultTheme.fontFamily.sans],
             },
         },
-
     },
 
+    // ¡Debe estar aquí!
     plugins: [
         forms,
         require('daisyui'),
