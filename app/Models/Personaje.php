@@ -31,5 +31,9 @@ class Personaje extends Model
         'locura_indefinida',
         'pos_x',
         'pos_y',
+        'avatar_url',
+        'cordura_maxima',
+        'hp',
+        'mp',
     ];
 }

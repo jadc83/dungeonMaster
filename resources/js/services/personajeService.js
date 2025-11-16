@@ -21,8 +21,6 @@ export const personajeService = {
    * @param {number} posY - La nueva coordenada Y.
    */
   updatePosicion: (personajeId, posX, posY) => {
-    // No usamos 'await' aquí, dejamos que el componente
-    // decida si quiere esperar o no.
     return axios.patch(`/personajes/${personajeId}`, {
       pos_x: posX,
       pos_y: posY,
@@ -34,12 +32,23 @@ export const personajeService = {
    * @param {Array} personajes - Array de personajes a resetear.
    */
   resetAllPosiciones: (personajes) => {
-    // Esto es mucho más rápido que un bucle 'for':
-    // Crea un array de todas las peticiones (promesas)
     const promesas = personajes.map(p =>
       axios.patch(`/personajes/${p.id}`, { pos_x: 0, pos_y: 0 })
     );
-    // Ejecuta todas las peticiones en paralelo
     return Promise.all(promesas);
+  }, // <-- ¡AQUÍ FALTABA LA COMA!
+
+  /**
+   * Actualiza un único stat de un personaje.
+   * @param {string} personajeId - El ID del personaje.
+   * @param {string} stat - El nombre del stat (ej: 'hp', 'mp', 'cordura').
+   * @param {number} value - El nuevo valor del stat.
+   */
+  updateStat: (personajeId, stat, value) => {
+    // Usamos un nombre de clave dinámico: { [stat]: value }
+    // Esto enviará, por ejemplo: { "hp": 9 }
+    return axios.patch(`/personajes/${personajeId}`, {
+      [stat]: value
+    });
   }
 };

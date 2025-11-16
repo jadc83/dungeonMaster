@@ -19,32 +19,34 @@ class StorePersonajeRequest extends FormRequest
      *
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */
-public function rules(): array
-{
-    return [
-        'nombre' => 'required|string|max:255|unique:personajes,nombre',
-        'nacionalidad' => 'required|string|max:255',
-        'residencia' => 'required|string|max:255',
-        'profesion' => 'required|string|max:255',
-        'edad' => 'required|integer|min:0|max:150',
-        'genero' => 'required|string|max:255',
-        'nombre_jugador' => 'nullable|string|max:255',
+    public function rules(): array
+    {
+        return [
+            'nombre' => 'required|string|max:255|unique:personajes,nombre',
+            'nacionalidad' => 'required|string|max:255',
+            'residencia' => 'required|string|max:255',
+            'profesion' => 'required|string|max:255',
+            'edad' => 'required|integer|min:0|max:150',
+            'genero' => 'required|string|max:255',
+            'nombre_jugador' => 'nullable|string|max:255',
 
-        'fuerza' => 'nullable|integer|min:0|max:100',
-        'constitucion' => 'nullable|integer|min:0|max:100',
-        'destreza' => 'nullable|integer|min:0|max:100',
-        'inteligencia' => 'nullable|integer|min:0|max:100',
-        'apariencia' => 'nullable|integer|min:0|max:100',
-        'tamano' => 'nullable|integer|min:0|max:100',
-        'poder' => 'nullable|integer|min:0|max:100',
-        'educacion' => 'nullable|integer|min:0|max:100',
+            'fuerza' => 'nullable|integer|min:0|max:100',
+            'constitucion' => 'nullable|integer|min:0|max:100',
+            'destreza' => 'nullable|integer|min:0|max:100',
+            'inteligencia' => 'nullable|integer|min:0|max:100',
+            'apariencia' => 'nullable|integer|min:0|max:100',
+            'tamano' => 'nullable|integer|min:0|max:100',
+            'poder' => 'nullable|integer|min:0|max:100',
+            'educacion' => 'nullable|integer|min:0|max:100',
 
-        'cordura' => 'nullable|integer|min:0|max:100',
-        'locura_temporal' => 'nullable|boolean',
-        'locura_indefinida' => 'nullable|boolean',
+            'cordura' => 'nullable|integer|min:0|max:100',
+            'locura_temporal' => 'nullable|boolean',
+            'locura_indefinida' => 'nullable|boolean',
 
-        'pos_x' => 'nullable|integer',
-        'pos_y' => 'nullable|integer',
-    ];
-}
+            'pos_x' => 'nullable|integer',
+            'pos_y' => 'nullable|integer',
+
+            'avatar_url' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048'
+        ];
+    }
 }

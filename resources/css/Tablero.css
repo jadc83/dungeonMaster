@@ -80,54 +80,6 @@
     padding-left: 0;
 }
 
-.personaje-lista-item {
-    margin-bottom: 10px;
-    border-bottom: 1px solid #8a6d3e;
-    position: relative;
-    padding-left: 8px;
-    cursor: pointer;
-    transition: background-color 0.5s ease-in-out;
-}
-
-/* Estados dinámicos para la lista */
-.personaje-lista-item.seleccionado {
-    background-color: rgba(191, 146, 72, 0.5);
-}
-
-.personaje-lista-item.objetivo {
-    background-color: rgba(200, 0, 0, 0.3);
-}
-
-.personaje-lista-item.en-onda {
-    background-color: rgba(255, 255, 0, 0.3);
-}
-
-.atacar-btn {
-    margin-top: 20px;
-    background-color: #8a6d3e;
-    color: #f5f0e6;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 10px;
-    font-weight: bold;
-    cursor: pointer;
-    font-family: 'Cinzel Decorative', cursive;
-    box-shadow: 0 0 10px #bf9248;
-    transition: background-color 0.3s;
-}
-
-.atacar-btn:disabled {
-    background-color: #8a6d3e;
-    color: #a69f8e;
-    cursor: default;
-    box-shadow: none;
-}
-
-.atacar-btn.modo-ataque-activo {
-    background-color: #722f0a;
-}
-
-
 /* Panel Central (Mapa) */
 .tablero-mapa {
     flex: 3;
@@ -157,6 +109,8 @@
     text-shadow: 1px 1px 2px #000;
     border: 2px solid #d4af37;
     transition: box-shadow 0.3s, background-color 0.3s;
+    /* Añadidos para el menú y el canvas */
+    position: relative;
 }
 
 /* Estados dinámicos para el token */
@@ -179,36 +133,44 @@
     cursor: default;
 }
 
-/* Efecto de Ondas */
+/* Efecto de Onda de Rango (Shockwave) */
 .onda-efecto {
-    position: absolute;
-    top: -8px;
-    left: -8px;
-    width: 86px;
-    height: 86px;
-    border-radius: 50%;
-    border: 3px solid rgba(255, 255, 0, 0.7);
-    box-shadow: 0 0 10px 4px rgba(255, 255, 0, 0.5);
-    animation: ondas 2s infinite;
-    pointer-events: none;
-    z-index: 1;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 70px;  /* Tamaño del token */
+  height: 70px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%); /* Centrado perfecto */
+
+  /* Animación: 1 segundo, una sola vez, y se queda en el estado final (transparente) */
+  animation: shockwave-range 1s forwards ease-out;
+
+  box-sizing: border-box;
+  pointer-events: none;
+  z-index: 15;
+  border: none; /* Usaremos box-shadow para el glow */
 }
 
-@keyframes ondas {
-    0% {
-        transform: scale(0.9);
-        opacity: 1;
-    }
-
-    70% {
-        transform: scale(1.2);
-        opacity: 0.7;
-    }
-
-    100% {
-        transform: scale(1.5);
-        opacity: 0;
-    }
+/* Animación de la onda de choque */
+@keyframes shockwave-range {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    /* Un glow rojo intenso e inmediato */
+    box-shadow: 0 0 10px 5px rgba(255, 0, 0, 0.9);
+    opacity: 1;
+  }
+  70% {
+    /* Se expande y cambia a naranja */
+    box-shadow: 0 0 25px 20px rgba(255, 100, 0, 0.4);
+    opacity: 0.5;
+  }
+  100% {
+    /* Se hace muy grande y se desvanece */
+    transform: translate(-50%, -50%) scale(2.0);
+    box-shadow: 0 0 30px 30px rgba(255, 0, 0, 0);
+    opacity: 0;
+  }
 }
 
 /* Panel Derecho (Info) */
@@ -264,7 +226,7 @@
  * COMPONENTE CREAR PERSONAJE
  */
 .crear-personaje-container {
-  max-width: 800px; /* <-- CAMBIADO A 800px */
+  max-width: 800px; /* Ensanchado */
   margin: 40px auto;
   padding: 30px;
   background: url('https://www.transparenttextures.com/patterns/wood-pattern.png') repeat;
@@ -339,28 +301,509 @@
   margin-top: 5px;
 }
 
-/* --- REGLAS NUEVAS AÑADIDAS --- */
-
-/* La nueva parrilla para el formulario */
+/* Parrilla del Formulario */
 .form-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr; /* Dos columnas de igual tamaño */
-  gap: 20px 25px; /* Espacio vertical y horizontal */
+  grid-template-columns: 1fr 1fr;
+  gap: 20px 25px;
 }
 
-/* Una clase para que un campo ocupe las 2 columnas */
 .form-grupo.span-2 {
   grid-column: span 2;
 }
 
-/* El estilo para las explicaciones */
 .form-explicacion {
   font-size: 0.9em;
-  color: #6b4c1d; /* Un color más suave */
+  color: #6b4c1d;
   margin-top: 5px;
   padding-left: 2px;
   font-family: 'Goudy Bookletter 1911', serif;
   font-style: italic;
   border-left: 3px solid #b4956a;
   padding-left: 8px;
+}
+
+/*
+ * TARJETA DE PERSONAJE (Panel Izquierdo)
+ */
+
+.pj-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  background-color: rgba(0, 0, 0, 0.1);
+  border: 1px solid #6b4c1d;
+  cursor: pointer;
+  transition: all 0.3s;
+  position: relative; /* Para el overlay 'MUERTO' */
+  overflow: hidden; /* Para el overlay 'MUERTO' */
+}
+
+/* Efectos de hover/seleccionado */
+.pj-card:hover {
+  background-color: rgba(0, 0, 0, 0.2);
+}
+.pj-card.seleccionado {
+  background-color: rgba(191, 146, 72, 0.5);
+  box-shadow: 0 0 8px rgba(191, 146, 72, 0.7);
+}
+.pj-card.objetivo {
+  background-color: rgba(200, 0, 0, 0.3);
+}
+
+/* El avatar redondo pequeño */
+.pj-card-avatar {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #d4af37;
+  flex-shrink: 0;
+}
+
+/* Contenedor para las 3 barras */
+.pj-card-stats {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px; /* Más espacio entre barras */
+}
+
+/* --- ESTRUCTURA DE FILA DE STAT --- */
+.stat-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* Botones + y - */
+.stat-button {
+  background-color: #6b4c1d;
+  color: #f5f0e6;
+  border: 1px solid #d4af37;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1; /* Ajuste para centrar el - y + */
+  flex-shrink: 0;
+  transition: background-color 0.2s;
+  user-select: none; /* Evita seleccionar el texto del botón */
+}
+.stat-button:hover {
+  background-color: #8a6d3e;
+}
+.stat-button:disabled {
+  background-color: #3e2d0a;
+  color: #6b4c1d;
+  border-color: #6b4c1d;
+  cursor: not-allowed;
+}
+
+/* El fondo de una barra (ahora más alta) */
+.stat-bar-bg {
+  width: 100%;
+  height: 20px; /* <-- MÁS ALTA */
+  background-color: #3e2d0a;
+  border-radius: 5px;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid #2e1d00;
+}
+
+/* El relleno de la barra (color) */
+.stat-bar-fill {
+  height: 100%;
+  transition: width 0.5s ease-in-out;
+  border-radius: 4px;
+}
+
+/* El texto (porcentaje) que va sobre la barra */
+.stat-bar-text {
+  position: absolute;
+  width: 100%;
+  top: 0;
+  left: 0;
+  text-align: center;
+  font-size: 11px; /* <-- Un poco más grande */
+  font-weight: bold;
+  color: white;
+  text-shadow: 1px 1px 1px #000;
+  line-height: 20px; /* <-- Centrado vertical */
+}
+
+/* Colores */
+.stat-bar-fill.hp { background-color: #c0392b; } /* Rojo */
+.stat-bar-fill.mp { background-color: #2980b9; } /* Azul */
+.stat-bar-fill.cordura { background-color: #8e44ad; } /* Violeta */
+
+/* --- ESTILOS DE MUERTE (con Botón Resucitar) --- */
+
+/* 1. La tarjeta se pone gris */
+.pj-card.dead {
+  filter: grayscale(100%);
+  background-color: #333;
+}
+
+/* 2. El contenedor del texto y el botón */
+.dead-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column; /* Apila el texto y el botón */
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(0, 0, 0, 0.6); /* Fondo oscuro */
+  z-index: 50;
+  padding: 5px;
+}
+
+/* 3. El texto "MUERTO" */
+.dead-text {
+  color: #c0392b; /* Rojo sangre */
+  font-family: 'Cinzel Decorative', cursive;
+  font-size: 1.2rem; /* Un poco más pequeño para que quepa el botón */
+  font-weight: bold;
+  text-shadow: 0 0 5px #000;
+}
+
+/* 4. El NUEVO botón "Resucitar" */
+.resucitar-btn {
+  background-color: #27ae60; /* Verde esmeralda */
+  color: white;
+  border: 1px solid #2ecc71;
+  border-radius: 5px;
+  padding: 4px 8px;
+  font-size: 10px;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 5px; /* Espacio entre el texto y el botón */
+  transition: all 0.2s;
+  z-index: 51; /* Por si acaso, encima del container */
+}
+.resucitar-btn:hover {
+  background-color: #2ecc71;
+  transform: scale(1.05);
+}
+
+/* --- ESTILO DE MUERTE (Token del Tablero) --- */
+
+.personaje-token.dead {
+  /* Opcional: quitamos el brillo si está muerto */
+  box-shadow: none !important;
+}
+
+/* El overlay rojo sangre */
+.personaje-token.dead::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%; /* Mantiene la forma redonda */
+
+  /* Tono rojo sangre transparente */
+  background-color: rgba(192, 57, 43, 0.7); /* Rojo (similar al HP) con 70% opacidad */
+
+  z-index: 5; /* Se pone encima del canvas, pero debajo de la onda */
+
+  /* Animación sutil de "pulso" */
+  animation: pulse-dead 2s infinite ease-in-out;
+}
+
+@keyframes pulse-dead {
+  0% {
+    background-color: rgba(192, 57, 43, 0.7);
+  }
+  50% {
+    background-color: rgba(192, 57, 43, 0.85); /* Pulso más intenso */
+  }
+  100% {
+    background-color: rgba(192, 57, 43, 0.7);
+  }
+}
+
+/* --- MENU CIRCULAR DE ACCIÓN (Estilo Monkey Island - CORREGIDO) --- */
+
+.menu-circular-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0);
+  z-index: 100;
+}
+
+.menu-circular-container {
+  position: absolute;
+  /* La posición (x, y) se pone con style={} y es el centro del token */
+  /* --- ¡HEMOS QUITADO EL TRANSFORM DE AQUÍ! --- */
+  z-index: 101;
+  pointer-events: none;
+}
+
+.menu-item {
+  position: absolute;
+  width: 60px;
+  height: 60px;
+  background-color: #8a6d3e;
+  color: #f5f0e6;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  font-family: 'Cinzel Decorative', cursive;
+  font-size: 11px;
+  line-height: 1.2;
+  font-weight: bold;
+  cursor: pointer;
+  border: 2px solid #d4af37;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+  pointer-events: auto;
+
+  /* --- ESTADO INICIAL (Centrado y Oculto) --- */
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.3); /* ¡Centrado en sí mismo y pequeño! */
+
+  /* Animamos la opacidad y la posición */
+  animation: menuItem-fade-in 0.2s forwards ease-out;
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Keyframe solo para la opacidad */
+@keyframes menuItem-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* *
+ * ESTADO FINAL (Abierto)
+ * Ahora, todos los transforms INCLUYEN el translate(-50%, -50%)
+*/
+.menu-item-1 {
+  /* Arriba */
+  transform: translate(-50%, -50%) translateY(-80px) scale(1);
+  animation-delay: 0s;
+  transition-delay: 0s;
+}
+.menu-item-1:hover { transform: translate(-50%, -50%) translateY(-80px) scale(1.1); }
+
+.menu-item-2 {
+  /* Abajo-Izquierda */
+  transform: translate(-50%, -50%) translateX(-70px) translateY(50px) scale(1);
+  animation-delay: 0.05s;
+  transition-delay: 0.05s;
+}
+.menu-item-2:hover { transform: translate(-50%, -50%) translateX(-70px) translateY(50px) scale(1.1); }
+
+.menu-item-3 {
+  /* Abajo-Derecha */
+  transform: translate(-50%, -50%) translateX(70px) translateY(50px) scale(1);
+  animation-delay: 0.1s;
+  transition-delay: 0.1s;
+}
+.menu-item-3:hover { transform: translate(-50%, -50%) translateX(70px) translateY(50px) scale(1.1); }
+
+
+/* --- Animación de Salida --- */
+.menu-item.closing {
+  opacity: 0;
+  /* Vuelve al estado inicial (centrado y pequeño) */
+  transform: translate(-50%, -50%) scale(0.3);
+  transition: transform 0.2s ease-in, opacity 0.2s ease-in;
+}
+
+/* --- BANNER MODO ATAQUE --- */
+.attack-mode-banner {
+  position: absolute;
+  top: 20px; /* Posición final: en lo alto */
+  left: 50%;
+
+  /* Estilo del cartel */
+  padding: 10px 30px;
+  background-color: #c0392b; /* Rojo sangre */
+  color: white;
+  font-family: 'Cinzel Decorative', cursive;
+  font-size: 2em;
+  font-weight: bold;
+  text-shadow: 2px 2px 4px #000;
+  border: 3px solid #f5f0e6;
+  border-radius: 10px;
+  box-shadow: 0 0 20px 10px rgba(255, 0, 0, 0.5); /* Glow rojo */
+  z-index: 200; /* Por encima de todo */
+
+  /* Animación de ENTRADA */
+  animation: spinInAndSettle 0.8s forwards cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes spinInAndSettle {
+  0% {
+    /* Empieza en el centro, pequeño y girando */
+    transform: translateX(-50%) scale(0.1) rotate(0deg);
+    opacity: 0;
+    top: 50%;
+  }
+  60% {
+    /* Da dos vueltas (720deg) mientras crece */
+    transform: translateX(-50%) scale(1.2) rotate(720deg);
+    opacity: 1;
+    top: 50%;
+  }
+  100% {
+    /* Se "planta" en lo alto */
+    transform: translateX(-50%) scale(1) rotate(720deg);
+    opacity: 1;
+    top: 20px;
+  }
+}
+
+/* Animación de SALIDA */
+.attack-mode-banner.closing {
+  /* 'forwards' es clave: se queda en el estado final (oculto) */
+  animation: fadeOutBanner 0.5s forwards ease-out;
+}
+
+@keyframes fadeOutBanner {
+  from {
+    transform: translateX(-50%) scale(1);
+    opacity: 1;
+    top: 20px;
+  }
+  to {
+    /* Se va hacia arriba y desaparece */
+    transform: translateX(-50%) scale(0.8);
+    opacity: 0;
+    top: -50px;
+  }
+}
+.attack-icon {
+  position: absolute;
+  top: -25px; /* Lo coloca justo encima del token */
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 24px; /* Tamaño del emoji */
+  cursor: crosshair; /* Cursor de ataque */
+  z-index: 30; /* Por encima de todo, incluso de la onda */
+
+  /* Animación para llamar la atención */
+  animation: pulse-attack-icon 1.2s infinite ease-in-out;
+
+  /* Filtro para que brille rojo y sea visible */
+  filter: drop-shadow(0 0 3px rgba(255, 0, 0, 1)) drop-shadow(0 0 6px rgba(255, 0, 0, 0.7));
+}
+
+.attack-icon:hover {
+  filter: drop-shadow(0 0 5px white) drop-shadow(0 0 10px red);
+}
+
+@keyframes pulse-attack-icon {
+  0% { transform: translateX(-50%) scale(1); }
+  50% { transform: translateX(-50%) scale(1.3); }
+  100% { transform: translateX(-50%) scale(1); }
+}
+.execute-attack-btn {
+  /* Usamos los mismos estilos que .atacar-btn */
+  margin-top: 10px; /* Un poco de espacio */
+  background-color: #c0392b; /* Rojo sangre (del banner) */
+  color: #f5f0e6;
+  padding: 10px 20px;
+  border: 2px solid #f5f0e6; /* Borde blanco para destacar */
+  border-radius: 10px;
+  font-weight: bold;
+  cursor: pointer;
+  font-family: 'Cinzel Decorative', cursive;
+  box-shadow: 0 0 15px 5px rgba(255, 0, 0, 0.5); /* Glow rojo */
+  transition: all 0.3s;
+  width: 100%; /* Ancho completo */
+}
+
+.execute-attack-btn:hover {
+  background-color: #e74c3c; /* Rojo más brillante */
+  transform: scale(1.02);
+}
+
+@keyframes pulse-attack-btn {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 10px 0 rgba(255, 0, 0, 0.7);
+  }
+  50% {
+    transform: scale(1.02);
+    box-shadow: 0 0 20px 10px rgba(255, 0, 0, 0.7);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 10px 0 rgba(255, 0, 0, 0.7);
+  }
+}
+.attacker-pulse-effect {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 70px;  /* Tamaño del token */
+  height: 70px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+
+  /* Animación: 0.7s, una vez */
+  animation: shockwave-attacker 0.7s forwards ease-out;
+
+  box-sizing: border-box;
+  pointer-events: none;
+  z-index: 16; /* Por encima de la onda roja (15) */
+}
+
+@keyframes shockwave-attacker {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    /* Un glow BLANCO/AZULADO intenso */
+    box-shadow: 0 0 10px 5px rgba(255, 255, 255, 0.9),
+                0 0 15px 10px rgba(0, 150, 255, 0.7);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.8);
+    /* Se desvanece */
+    box-shadow: 0 0 30px 25px rgba(0, 150, 255, 0);
+    opacity: 0;
+  }
+}
+.attack-icon {
+  position: absolute;
+  top: -25px; /* Lo coloca justo encima del token */
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 24px; /* Tamaño del emoji */
+  cursor: crosshair; /* Cursor de ataque */
+  z-index: 30; /* Por encima de todo, incluso de la onda */
+
+  /* Animación para llamar la atención */
+  animation: pulse-attack-icon 1.2s infinite ease-in-out;
+
+  /* Filtro para que brille rojo y sea visible */
+  filter: drop-shadow(0 0 3px rgba(255, 0, 0, 1)) drop-shadow(0 0 6px rgba(255, 0, 0, 0.7));
+}
+
+.attack-icon:hover {
+  filter: drop-shadow(0 0 5px white) drop-shadow(0 0 10px red);
+}
+
+@keyframes pulse-attack-icon {
+  0% { transform: translateX(-50%) scale(1); }
+  50% { transform: translateX(-50%) scale(1.3); }
+  100% { transform: translateX(-50%) scale(1); }
 }

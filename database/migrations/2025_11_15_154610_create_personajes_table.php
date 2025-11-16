@@ -22,6 +22,7 @@ return new class extends Migration
             $table->integer('edad')->default(30);
             $table->string('genero')->default('No especificado');
             $table->string('nombre_jugador')->nullable(); // Puede ser nulo
+            $table->string('avatar_url')->nullable()->default(null);
 
             // --- Atributos de Cthulhu (Valores por defecto 50, Posición 0) ---
             $table->integer('fuerza')->default(50);
@@ -32,11 +33,14 @@ return new class extends Migration
             $table->integer('tamano')->default(50);
             $table->integer('poder')->default(50);
             $table->integer('educacion')->default(50);
+            $table->integer('hp')->default(10); // Puntos de vida iniciales
+            $table->integer('mp')->default(10); // Puntos de magia iniciales
 
             // --- Locura y Estado ---
             $table->integer('cordura')->default(50); // Valor inicial
             $table->boolean('locura_temporal')->default(false);
             $table->boolean('locura_indefinida')->default(false);
+            $table->integer('cordura_maxima')->default(99);
 
             // --- Posicionamiento en el Mapa (Necesario para React Draggable) ---
             $table->integer('pos_x')->default(0);

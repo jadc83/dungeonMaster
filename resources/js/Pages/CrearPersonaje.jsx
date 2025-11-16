@@ -2,7 +2,6 @@ import React from 'react';
 import { useForm, Link } from '@inertiajs/react';
 
 export default function CrearPersonaje() {
-  // useForm maneja el estado, los errores y el envío
   const { data, setData, post, processing, errors } = useForm({
     nombre: '',
     nacionalidad: 'Desconocida',
@@ -11,19 +10,26 @@ export default function CrearPersonaje() {
     edad: 30,
     genero: 'No especificado',
     nombre_jugador: '',
+    avatar_url: null, // <-- ¡AHORA ES 'null'!
   });
 
-  // El 'handleChange' ahora usa 'setData'
+  // ¡ESTE 'handleChange' ES DIFERENTE!
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setData(name, value);
+    const { name, value, type, files } = e.target;
+
+    if (type === 'file') {
+      // Si es un archivo, guardamos el objeto File
+      setData(name, files[0]);
+    } else {
+      // Si es texto, guardamos el valor
+      setData(name, value);
+    }
   };
 
-  // 'handleSubmit' ahora solo llama a 'post'.
   const handleSubmit = (e) => {
     e.preventDefault();
-    // 'post' envía los datos. Si el backend devuelve un error 422,
-    // rellena 'errors'. Si tiene éxito, sigue la redirección del backend.
+    // 'post' es inteligente. Al ver un objeto File,
+    // automáticamente enviará el formulario como 'multipart/form-data'
     post('/personajes');
   };
 
@@ -32,9 +38,9 @@ export default function CrearPersonaje() {
       <h2 className="crear-personaje-titulo">Crear Investigador</h2>
 
       <form onSubmit={handleSubmit}>
-
-        {/* Usamos la nueva parrilla */}
         <div className="form-grid">
+
+          {/* ... (Todos tus otros campos: nombre, nacionalidad, etc. se quedan igual) ... */}
 
           {/* --- CAMPO NOMBRE (Ocupa 2 columnas) --- */}
           <div className="form-grupo span-2">
@@ -141,6 +147,23 @@ export default function CrearPersonaje() {
             />
             <p className="form-explicacion">Tu alias fuera de este mundo (para el Guardián).</p>
             {errors.nombre_jugador && <div className="error-texto">{errors.nombre_jugador}</div>}
+          </div>
+
+          {/* --- ¡CAMPO DE ARCHIVO MODIFICADO! --- */}
+          <div className="form-grupo span-2">
+            <label htmlFor="avatar_url" className="form-label">Token (Avatar):</label>
+            <input
+              id="avatar_url"
+              name="avatar_url"
+              type="file" // <-- ¡TIPO 'file'!
+              onChange={handleChange}
+              className="form-input"
+              // ¡OJO! Los input 'file' no usan 'value'
+            />
+            <p className="form-explicacion">
+              Sube la imagen del token (PNG, JPG, max 2MB). Si no subes, se usará el token por defecto.
+            </p>
+            {errors.avatar_url && <div className="error-texto">{errors.avatar_url}</div>}
           </div>
 
         </div> {/* Fin de .form-grid */}
