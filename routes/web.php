@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Controllers\MapaController;
 use App\Http\Controllers\PersonajeController;
+use App\Http\Controllers\PlantillaController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -36,8 +38,19 @@ Route::post('/personajes', [PersonajeController::class, 'store']);
 Route::get('/tablero', function () {
     return Inertia::render('Tablero');
 });
+Route::get('/mapas', [MapaController::class, 'index']);
+Route::post('/mapas', [MapaController::class, 'store'])->name('mapas.store');
+Route::get('/mapas/{mapaId}/elementos', [MapaController::class, 'getElementos']);
 
+Route::get('/editor', function () {
+    // La función 'render' de Inertia busca el componente 'EditorMapa'
+    // en la carpeta 'resources/js/Pages' (o donde lo hayas guardado).
+    return Inertia::render('EditorMapa');
+})->name('editor');
 
+Route::post('/mapas/{mapa}/elementos', [MapaController::class, 'guardarElementos']);
+Route::get('/plantillas/objetos', [PlantillaController::class, 'getObjetos']);
+Route::get('/plantillas/eventos', [PlantillaController::class, 'getEventos']);
 
 
 require __DIR__.'/auth.php';

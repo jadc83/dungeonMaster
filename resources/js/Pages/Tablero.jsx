@@ -6,18 +6,12 @@ import { Link } from '@inertiajs/react';
 import InfoPersonaje from './InfoPersonaje';
 import { calcularDistancia, calcularOndas as calcularOndasUtil } from '../utils/logicaTablero';
 import { personajeService } from '../services/personajeService';
+import { mapaService } from '../services/mapaService'; // ¡Importado!
 import PersonajeCanvas from './PersonajeCanvas';
 import PersonajeCard from './PersonajeCard';
 
 // Constantes del Token
 const TOKEN_CENTER_OFFSET = 35;
-
-// --- ¡LISTA DE MAPAS DISPONIBLES! ---
-const MAP_LIST = [
-  { name: 'La Taberna', path: '/mapa.jpg' },
-  { name: 'Exterior (Bosque)', path: '/mapa2.jpg' },
-  // Puedes añadir más aquí, ej: { name: 'Cripta', path: '/cripta.jpg' }
-];
 
 function Tablero() {
   const [personajes, setPersonajes] = useState([]);
@@ -36,19 +30,74 @@ function Tablero() {
   const [attackerPulseKey, setAttackerPulseKey] = useState(null);
   const [isAvailableListOpen, setIsAvailableListOpen] = useState(true);
 
-  // --- ¡NUEVOS ESTADOS PARA EL MAPA! ---
-  const [currentMap, setCurrentMap] = useState(MAP_LIST[0].path); // Mapa actual
-  const [isMapModalOpen, setIsMapModalOpen] = useState(false); // Visibilidad del modal
+  // --- ESTADOS PARA MAPAS DINÁMICOS ---
+  const [availableMaps, setAvailableMaps] = useState([]);
+  const [currentMap, setCurrentMap] = useState(null);
+  const [isMapModalOpen, setIsMapModalOpen] = useState(false);
+  const [isLoadingMaps, setIsLoadingMaps] = useState(true);
+
+  // --- ESTADO PARA LOS ELEMENTOS DEL MAPA ---
+  const [mapElements, setMapElements] = useState([]);
+
+  // --- ESTADO PARA EL TOOLTIP PERSONALIZADO ---
+  const [activeTooltip, setActiveTooltip] = useState({
+    visible: false,
+    x: 0,
+    y: 0,
+    name: null,
+    type: null,
+    details: null // Contendrá datos como valor, descripción, etc.
+  });
 
   const mapaRef = useRef(null);
 
+  // --- useEffect para cargar Personajes Y Mapas ---
   useEffect(() => {
-    async function fetchPersonajes() {
-      const data = await personajeService.getAll();
-      setPersonajes(data);
+    async function fetchInitialData() {
+      // 1. Cargar Personajes
+      try {
+        const personajesData = await personajeService.getAll();
+        setPersonajes(personajesData);
+      } catch (error) {
+        console.error("Error al cargar personajes", error);
+      }
+
+      // 2. Cargar Mapas
+      setIsLoadingMaps(true);
+      try {
+        const mapsData = await mapaService.getAllMaps();
+        setAvailableMaps(mapsData);
+        if (mapsData.length > 0) {
+          setCurrentMap(mapsData[0]);
+        }
+      } catch (error) {
+        console.error("Error al cargar mapas", error);
+      } finally {
+        setIsLoadingMaps(false);
+      }
     }
-    fetchPersonajes();
+    fetchInitialData();
   }, []);
+
+  // --- useEffect para cargar Elementos del Mapa ---
+  useEffect(() => {
+    async function fetchMapElements() {
+        if (currentMap && currentMap.id) {
+            try {
+                // Llamamos a la nueva función del servicio
+                const elements = await mapaService.getMapElements(currentMap.id);
+                setMapElements(elements);
+            } catch (error) {
+                console.error("Fallo al cargar los elementos del mapa:", error);
+                setMapElements([]);
+            }
+        } else {
+            setMapElements([]);
+        }
+    }
+    fetchMapElements();
+  }, [currentMap]); // Se ejecuta cada vez que el mapa actual cambia
+
 
   useEffect(() => {
     if (modoAtaque) {
@@ -119,7 +168,15 @@ function Tablero() {
 
   const agregarAPersonajeEnTablero = (personaje) => {
     if (!personajesEnTablero.find((p) => p.id === personaje.id)) {
-      setPersonajesEnTablero([...personajesEnTablero, personaje]);
+      // Usamos el spawn_x y spawn_y del mapa actual.
+      const spawnX = currentMap?.spawn_x ?? 0;
+      const spawnY = currentMap?.spawn_y ?? 0;
+
+      setPersonajesEnTablero([...personajesEnTablero, {
+          ...personaje,
+          pos_x: spawnX,
+          pos_y: spawnY,
+      }]);
     }
   };
 
@@ -142,7 +199,8 @@ function Tablero() {
 
   const toggleModoAtaque = () => {
     if (!selectedPersonajeId) {
-      alert("Debes seleccionar un personaje para activar el modo ataque.");
+      // Reemplazado alert() por console.error o mensaje interno
+      console.error("Debes seleccionar un personaje para activar el modo ataque.");
       return;
     }
 
@@ -169,6 +227,7 @@ function Tablero() {
   };
 
   const manejarClickPersonajeEnAtaque = (objetivoId) => {
+    // CORRECCIÓN: Usar selectedPersonajeId en la comparación
     if (modoAtaque && selectedPersonajeId !== null && objetivoId !== selectedPersonajeId) {
       setObjetivoPersonajeId(objetivoId);
     }
@@ -249,8 +308,6 @@ function Tablero() {
     }
   };
 
-  // --- resetearPosiciones() ELIMINADO ---
-
   const atacante = personajesEnTablero.find((p) => p.id === selectedPersonajeId);
   const objetivo = personajesEnTablero.find((p) => p.id === objetivoPersonajeId);
   const personajesMultiple = personajesEnTablero.filter((p) => seleccionMultipleIds.includes(p.id));
@@ -268,7 +325,7 @@ function Tablero() {
 
   const handleMenuOpcion = (opcion) => {
     const pj = personajesEnTablero.find(p => p.id === menuCircular.personajeId);
-    alert(`Has seleccionado "${opcion}" para ${pj.nombre}`);
+    console.log(`Has seleccionado "${opcion}" para ${pj.nombre}`);
     cerrarMenuCircular();
   };
 
@@ -337,13 +394,13 @@ function Tablero() {
 
   const handleEjecutarAtaque = () => {
     if (!modoAtaque || !atacante || !objetivo) {
-      alert("Debes seleccionar un atacante y un objetivo válido.");
+      console.error("Debes seleccionar un atacante y un objetivo válido.");
       return;
     }
 
     const isEnRango = ondasIds.some(onda => onda.id === objetivo.id);
     if (!isEnRango) {
-      alert(`${objetivo.nombre} está fuera de rango.`);
+      console.error(`${objetivo.nombre} está fuera de rango.`);
       return;
     }
 
@@ -354,6 +411,53 @@ function Tablero() {
     setObjetivoPersonajeId(null);
     setDistancia(null);
   };
+
+  // --- HANDLERS DEL TOOLTIP ---
+  const isObject = (element) => element.elementable_type.includes('Objeto');
+
+  const handleElementMouseEnter = (e, element) => {
+    if (!mapaRef.current) return;
+
+    // Calculamos la posición del tooltip relativa al tablero-mapa
+    const rect = e.currentTarget.getBoundingClientRect();
+    const mapRect = mapaRef.current.getBoundingClientRect();
+
+    // Posición del centro del token
+    const tokenCenterX = rect.left - mapRect.left + rect.width / 2;
+    const tokenCenterY = rect.top - mapRect.top + rect.height / 2;
+
+    // Contenido del elementable (objeto/evento)
+    const elementable = element.elementable || {};
+    const type = element.elementable_type.split('\\').pop();
+
+    setActiveTooltip({
+        visible: true,
+        x: tokenCenterX + 30, // Posiciona a la derecha del token
+        y: tokenCenterY - 60, // Sube para centrar verticalmente o mostrar por encima
+
+        // PRIORIZAR denominacion (para objetos/eventos) sobre nombre
+        name: elementable.denominacion || elementable.nombre || type,
+        type: type,
+        details: {
+            pos_x: element.pos_x,
+            pos_y: element.pos_y,
+            rango: element.rango_activacion,
+            valor: elementable.valor, // Campo común en Objeto/Evento
+            // PRIORIZAR descripcion (para objetos) o notas_master (para eventos)
+            descripcion: elementable.descripcion || elementable.notas_master || 'Sin descripción.',
+            icon: isObject(element) ? '📦' : '📜',
+        },
+    });
+  };
+
+  const handleElementMouseLeave = () => {
+      setActiveTooltip(prev => ({ ...prev, visible: false }));
+  };
+  // --- FIN HANDLERS DEL TOOLTIP ---
+
+
+  // Obtenemos la URL del mapa actual para el estilo. Usamos un fallback.
+  const mapImageUrl = currentMap?.imagen_url || '/mapa-default.jpg';
 
 
   return (
@@ -378,7 +482,7 @@ function Tablero() {
               >
                 Crear Personaje
               </Link>
-              {/* --- ¡NUEVO BOTÓN CAMBIAR MAPA! --- */}
+              {/* --- BOTÓN CAMBIAR MAPA --- */}
               <button
                 onClick={() => setIsMapModalOpen(true)}
                 className="reset-button"
@@ -496,22 +600,109 @@ function Tablero() {
       </div> {/* --- FIN DEL PANEL IZQUIERDO --- */}
 
 
-      {/* --- INICIO DEL MAPA (¡MODIFICADO!) --- */}
+      {/* --- INICIO DEL MAPA --- */}
       <div
         ref={mapaRef}
         className="tablero-mapa"
         onClick={manejarClickTablero}
         onContextMenu={manejarClickTablero}
         style={{
-          // --- ¡BACKGROUNDIMAGE AHORA ES DINÁMICO! ---
-          backgroundImage: `url('${currentMap}')`,
+          backgroundImage: `url('${mapImageUrl}')`,
           backgroundSize: 'cover',
           backgroundPosition: 'center center',
           backgroundRepeat: 'no-repeat',
           backgroundColor: 'rgba(0,0,0,0.4)',
-          backgroundBlendMode: 'darken'
+          backgroundBlendMode: 'darken',
+          // Establecer la posición relativa para que los elementos absolutos funcionen
+          position: 'relative',
+          overflow: 'hidden'
         }}
       >
+
+        {/* --- Renderizar Elementos del Mapa (Objetos/Eventos) --- */}
+        {mapElements.map((element) => {
+            const type = element.elementable_type.split('\\').pop();
+            const icon = isObject(element) ? '📦' : '📜';
+            const typeClass = isObject(element) ? 'element-object' : 'element-event';
+
+            return (
+              <div
+                key={element.id}
+                className={`map-element-token ${typeClass}`}
+                style={{
+                  // Usamos transform para posicionamiento absoluto eficiente
+                  transform: `translate(${element.pos_x}px, ${element.pos_y}px)`,
+                  position: 'absolute',
+                  cursor: 'help', // Cambiado a help para indicar info al pasar el ratón
+                  zIndex: 10,
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '50%',
+                  backgroundColor: isObject(element) ? 'rgba(56, 189, 248, 0.7)' : 'rgba(255, 193, 7, 0.7)',
+                  border: '2px solid white',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 0 8px rgba(0,0,0,0.5)',
+                  transition: 'background-color 0.3s'
+                }}
+                // --- HANDLERS PARA MOSTRAR TOOLTIP ---
+                onMouseEnter={(e) => handleElementMouseEnter(e, element)}
+                onMouseLeave={handleElementMouseLeave}
+              >
+                <span style={{ fontSize: '1.2rem' }}>
+                    {icon}
+                </span>
+              </div>
+            );
+        })}
+        {/* --- FIN Renderizado Elementos del Mapa --- */}
+
+        {/* --- TOOLTIP PERSONALIZADO --- */}
+        {activeTooltip.visible && activeTooltip.details && (
+            <div
+                style={{
+                    position: 'absolute',
+                    top: `${activeTooltip.y}px`,
+                    left: `${activeTooltip.x}px`,
+                    zIndex: 100,
+                    backgroundColor: 'rgba(30, 30, 30, 0.95)',
+                    color: '#d4af37',
+                    border: '1px solid #6b4c1d',
+                    padding: '10px 15px',
+                    borderRadius: '8px',
+                    width: '250px',
+                    pointerEvents: 'none', // Asegura que no interfiera con el mouseleave del token
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
+                    fontSize: '0.85rem',
+                    lineHeight: '1.4',
+                    animation: 'fadeIn 0.2s ease-out'
+                }}
+            >
+                <div style={{fontWeight: 'bold', fontSize: '1rem', color: '#fff', marginBottom: '5px'}}>
+                    {activeTooltip.details.icon} {activeTooltip.name}
+                </div>
+                <div style={{color: '#ccc', marginBottom: '8px'}}>
+                    Tipo: {activeTooltip.type}
+                </div>
+                <p style={{marginBottom: '5px'}}>
+                    <strong>Posición:</strong> ({activeTooltip.details.pos_x}, {activeTooltip.details.pos_y})
+                </p>
+                {activeTooltip.details.valor && (
+                    <p style={{marginBottom: '5px'}}>
+                        <strong>Valor:</strong> {activeTooltip.details.valor}
+                    </p>
+                )}
+                <p>
+                    <strong>Rango Activación:</strong> {activeTooltip.details.rango}
+                </p>
+                <div style={{marginTop: '10px', paddingTop: '5px', borderTop: '1px solid #444'}}>
+                    {activeTooltip.details.descripcion}
+                </div>
+            </div>
+        )}
+        {/* --- FIN TOOLTIP PERSONALIZADO --- */}
+
 
         {bannerVisible && (
           <div className={`attack-mode-banner ${bannerClosing ? 'closing' : ''}`}>
@@ -562,6 +753,7 @@ function Tablero() {
               key={p.id}
               bounds="parent"
               defaultPosition={{ x: p.pos_x, y: p.pos_y }}
+              position={{ x: p.pos_x, y: p.pos_y }} // Usar 'position' para controlar desde el estado
               onStart={() => onStartDrag(p.id)}
               onStop={(e, data) => onStopDrag(e, data, p.id)}
               disabled={isDead}
@@ -661,8 +853,7 @@ function Tablero() {
         )}
       </div>
 
-      {/* --- ¡NUEVO MODAL PARA CAMBIAR MAPA! --- */}
-      {/* Usamos las clases de DaisyUI para el modal */}
+      {/* --- MODAL PARA CAMBIAR MAPA --- */}
       {isMapModalOpen && (
         <dialog className="modal modal-open">
           <div className="modal-box" style={{backgroundColor: '#f5f0e6', border: '3px solid #6b4c1d'}}>
@@ -670,22 +861,27 @@ function Tablero() {
               Seleccionar Escenario
             </h3>
 
-            <div className="map-grid-container">
-              {MAP_LIST.map(map => (
-                <div
-                  key={map.path}
-                  // Aplicamos la clase 'active' si es el mapa actual
-                  className={`map-thumbnail ${currentMap === map.path ? 'active' : ''}`}
-                  onClick={() => {
-                    setCurrentMap(map.path); // Cambia el mapa
-                    setIsMapModalOpen(false); // Cierra el modal
-                  }}
-                >
-                  <img src={map.path} alt={map.name} />
-                  <span>{map.name}</span>
+            {isLoadingMaps ? (
+                <p>Cargando mapas...</p>
+            ) : availableMaps.length === 0 ? (
+                <p>No se encontraron mapas en la base de datos.</p>
+            ) : (
+                <div className="map-grid-container">
+                    {availableMaps.map(map => (
+                        <div
+                            key={map.id}
+                            className={`map-thumbnail ${currentMap && currentMap.id === map.id ? 'active' : ''}`}
+                            onClick={() => {
+                                setCurrentMap(map); // Almacena el objeto del mapa
+                                setIsMapModalOpen(false);
+                            }}
+                        >
+                            <img src={map.imagen_url} alt={map.nombre} />
+                            <span>{map.nombre} (ID: {map.id})</span>
+                        </div>
+                    ))}
                 </div>
-              ))}
-            </div>
+            )}
 
             <div className="modal-action">
               <button className="reset-button" onClick={() => setIsMapModalOpen(false)}>Cerrar</button>
