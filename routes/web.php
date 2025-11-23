@@ -25,32 +25,47 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // Rutas protegidas que necesitan autenticación:
+
+    // RUTAS BASE DE PERSONAJES
+    Route::get('/personajes', [PersonajeController::class, 'index']);
+    Route::patch('/personajes/{personaje}', [PersonajeController::class, 'update']);
+    Route::get('/personajes/crear', function () {
+        return Inertia::render('CrearPersonaje');
+    });
+    Route::post('/personajes', [PersonajeController::class, 'store']);
+
+    // RUTAS DE INVENTARIO Y DETALLE (NUEVAS O MODIFICADAS)
+    // 1. Obtener detalles del personaje con posibles inclusiones (incluyendo inventario)
+    // El servicio JS usa esta ruta con el query param: /personajes/{id}?include=inventario
+    Route::get('/personajes/{personaje}', [PersonajeController::class, 'show']);
+
+    // 2. Acción para Recoger/Añadir un Objeto al Inventario (POST)
+    // Usado por personajeService.recogerObjeto
+    Route::post('/personajes/{personaje}/inventario/recoger', [PersonajeController::class, 'recogerObjeto']);
+
+    // RUTAS DE MAPAS Y EDICIÓN
+    Route::get('/tablero', function () {
+        return Inertia::render('Tablero');
+    })->name('tablero');
+
+    Route::get('/mapas', [MapaController::class, 'index']);
+    Route::post('/mapas', [MapaController::class, 'store'])->name('mapas.store');
+    Route::get('/mapas/{mapaId}/elementos', [MapaController::class, 'getElementos']);
+
+    Route::get('/editor', function () {
+        return Inertia::render('EditorMapa');
+    })->name('editor');
+
+    Route::post('/mapas/{mapa}/elementos', [MapaController::class, 'guardarElementos']);
+    Route::post('/mapas/{mapa}/elementos/agregar', [MapaController::class, 'agregarElemento']);
+    Route::delete('/mapas/elementos/{elementoMapa}', [MapaController::class, 'eliminarElemento']);
+
+    // RUTAS DE PLANTILLAS
+    Route::get('/plantillas/objetos', [PlantillaController::class, 'getObjetos']);
+    Route::get('/plantillas/eventos', [PlantillaController::class, 'getEventos']);
 });
-Route::get('/personajes', [PersonajeController::class, 'index']);
-
-Route::patch('/personajes/{personaje}', [PersonajeController::class, 'update']);
-
-Route::get('/personajes/crear', function () {
-    return Inertia::render('CrearPersonaje');
-});
-Route::post('/personajes', [PersonajeController::class, 'store']);
-
-Route::get('/tablero', function () {
-    return Inertia::render('Tablero');
-});
-Route::get('/mapas', [MapaController::class, 'index']);
-Route::post('/mapas', [MapaController::class, 'store'])->name('mapas.store');
-Route::get('/mapas/{mapaId}/elementos', [MapaController::class, 'getElementos']);
-
-Route::get('/editor', function () {
-    // La función 'render' de Inertia busca el componente 'EditorMapa'
-    // en la carpeta 'resources/js/Pages' (o donde lo hayas guardado).
-    return Inertia::render('EditorMapa');
-})->name('editor');
-
-Route::post('/mapas/{mapa}/elementos', [MapaController::class, 'guardarElementos']);
-Route::get('/plantillas/objetos', [PlantillaController::class, 'getObjetos']);
-Route::get('/plantillas/eventos', [PlantillaController::class, 'getEventos']);
 
 
 require __DIR__.'/auth.php';

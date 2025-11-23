@@ -15,9 +15,53 @@ export const personajeService = {
   },
 
   /**
+   * Obtiene los detalles de un personaje específico con inclusiones opcionales.
+   * @param {string} personajeId - El ID del personaje.
+   * @param {string} include - Relaciones a incluir (ej: 'inventario').
+   */
+  getPersonajeDetails: async (personajeId, include = null) => {
+    const url = include ? `/personajes/${personajeId}?include=${include}` : `/personajes/${personajeId}`;
+    const res = await axios.get(url);
+    return res.data;
+  },
+
+  // --- NUEVA FUNCIÓN: Obtener Inventario ---
+
+  /**
+   * Obtiene el inventario completo (objetos poseídos con cantidad y estado)
+   * de un personaje específico, cargando la relación 'inventario'.
+   * @param {string} personajeId - El ID del personaje.
+   */
+  getInventario: async (personajeId) => {
+    // Solicitamos el personaje con la relación 'inventario' cargada.
+    const res = await axios.get(`/personajes/${personajeId}?include=inventario`);
+    // Retornamos solo la data del inventario para simplicidad en el frontend.
+    return res.data.inventario;
+  },
+
+  // --- NUEVA FUNCIÓN: Recoger Objeto ---
+
+  /**
+   * Maneja la acción de recoger un objeto del mapa.
+   * Esto puede resultar en un INSERT o un UPDATE en la tabla pivot 'personaje_objeto'.
+   *
+   * @param {string} personajeId - El ID del personaje que recoge el objeto.
+   * @param {string} objetoId - El ID del objeto que se recoge.
+   * @param {number} cantidad - La cantidad del objeto a recoger (por defecto, 1).
+   */
+  recogerObjeto: (personajeId, objetoId, cantidad = 1) => {
+    return axios.post(`/personajes/${personajeId}/inventario/recoger`, {
+      objeto_id: objetoId,
+      cantidad: cantidad,
+    });
+  },
+
+  // --- FUNCIONES EXISTENTES ---
+
+  /**
    * Actualiza la posición de un personaje específico.
    * @param {string} personajeId - El ID del personaje a mover.
-   ** @param {number} posX - La nueva coordenada X.
+   * @param {number} posX - La nueva coordenada X.
    * @param {number} posY - La nueva coordenada Y.
    */
   updatePosicion: (personajeId, posX, posY) => {
@@ -26,8 +70,6 @@ export const personajeService = {
       pos_y: posY,
     });
   },
-
-  // --- resetAllPosiciones() ELIMINADO ---
 
   /**
    * Actualiza un único stat de un personaje.

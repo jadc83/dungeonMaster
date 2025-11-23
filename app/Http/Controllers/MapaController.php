@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Mapa;
 use App\Models\ElementoMapa;
 use App\Models\Objeto;
-use App\Models\Evento;
+use App\Models\Event;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -201,5 +201,65 @@ class MapaController extends Controller
         }
 
         return response()->json(['success' => true, 'message' => 'Elementos guardados correctamente.']);
+    }
+
+    /**
+     * Añade un elemento individual al mapa.
+     * Se usa cuando se arrastra un objeto desde el panel al mapa.
+     */
+    public function agregarElemento(Request $request, Mapa $mapa)
+    {
+        $validated = $request->validate([
+            'elementable_type' => 'required|string|in:App\Models\Objeto,App\Models\Evento',
+            'elementable_id' => 'required|integer',
+            'pos_x' => 'required|integer',
+            'pos_y' => 'required|integer',
+            'rango_activacion' => 'nullable|integer|min:1'
+        ]);
+
+        try {
+            $elemento = ElementoMapa::create([
+                'mapa_id' => $mapa->id,
+                'elementable_type' => $validated['elementable_type'],
+                'elementable_id' => $validated['elementable_id'],
+                'pos_x' => $validated['pos_x'],
+                'pos_y' => $validated['pos_y'],
+                'rango_activacion' => $validated['rango_activacion'] ?? 1,
+                'esta_activo' => true
+            ]);
+
+            // Cargar la relación para devolver el objeto completo
+            $elemento->load('elementable');
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Elemento añadido correctamente.',
+                'elemento' => $elemento
+            ], 201);
+        } catch (\Exception $e) {
+            Log::error('Error al añadir elemento al mapa: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al añadir elemento al mapa.'
+            ], 500);
+        }
+    }
+
+    /**
+     * Elimina un elemento específico del mapa.
+     * Se usa cuando un personaje recoge un objeto del mapa.
+     */
+    public function eliminarElemento(ElementoMapa $elementoMapa)
+    {
+        try {
+            $elementoMapa->delete();
+            return response()->json(['success' => true, 'message' => 'Elemento eliminado correctamente.']);
+        } catch (\Exception $e) {
+            Log::error('Error al eliminar elemento del mapa: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al eliminar elemento del mapa.'
+            ], 500);
+        }
     }
 }

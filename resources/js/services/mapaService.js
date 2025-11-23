@@ -98,5 +98,32 @@ export const mapaService = {
       console.error("Error al guardar elementos en Laravel:", error.response || error);
       throw new Error(`Fallo el guardado de elementos. (${error.response?.data?.message || error.message})`);
     }
+  },
+
+  /**
+   * Elimina un elemento específico del mapa.
+   * Se usa cuando un personaje recoge un objeto.
+   */
+  async deleteElement(elementId) {
+    try {
+      const response = await axios.delete(`/mapas/elementos/${elementId}`);
+      return response.data;
+    } catch (error) {
+      console.error("Error al eliminar elemento del mapa:", error.response || error);
+      throw new Error(`Error al eliminar elemento. (${error.response?.data?.message || error.message})`);
+    }
+  },
+
+  /**
+   * Añade un elemento individual al mapa (arrastrando desde el panel).
+   */
+  async addElement(mapId, elementData) {
+    try {
+      const response = await axios.post(`/mapas/${mapId}/elementos/agregar`, elementData);
+      return response.data;
+    } catch (error) {
+      console.error("Error al añadir elemento al mapa:", error.response || error);
+      throw new Error(`Error al añadir elemento. (${error.response?.data?.message || error.message})`);
+    }
   }
 };

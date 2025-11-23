@@ -23,14 +23,24 @@ export default function AuthenticatedLayout({ header, children }) {
                                 </Link>
                             </div>
 
-                            <div className="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                                <NavLink
-                                    href={route('dashboard')}
-                                    active={route().current('dashboard')}
-                                >
-                                    Dashboard
-                                </NavLink>
-                            </div>
+                            <NavLink
+                                href={route('dashboard')}
+                                active={route().current('dashboard')}
+                            >
+                                Dashboard
+                            </NavLink>
+                            <NavLink
+                                href={route('tablero')} // ⬅️ Usar el nombre de ruta 'tablero'
+                                active={route().current('tablero')} // ⬅️ Usar el nombre de ruta 'tablero'
+                            >
+                                Tablero {/* También cambié el texto para que coincida con la ruta */}
+                            </NavLink>
+                            <NavLink
+                                href={route('editor')} // ⬅️ Usar el nombre de ruta 'editor'
+                                active={route().current('editor')} // ⬅️ Usar el nombre de ruta 'editor'
+                            >
+                                Editor {/* También cambié el texto para que coincida con la ruta */}
+                            </NavLink>
                         </div>
 
                         <div className="hidden sm:ms-6 sm:flex sm:items-center">

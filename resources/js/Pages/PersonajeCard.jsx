@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { personajeService } from '../services/personajeService';
 
 /**
  * Este es el nuevo componente para la tarjeta de la lista izquierda.
@@ -15,7 +16,19 @@ export default function PersonajeCard({
 }) {
 
   // Estado interno para saber qué pestaña está activa
-  const [activeTab, setActiveTab] = useState('stats'); // 'stats', 'info', 'spells'
+  const [activeTab, setActiveTab] = useState('stats'); // 'stats', 'weapons', 'spells', 'inventory'
+
+  // Estado para el inventario
+  const [inventory, setInventory] = useState([]);
+  const [isLoadingInventory, setIsLoadingInventory] = useState(false);
+
+  // Estado para el tooltip del inventario
+  const [inventoryTooltip, setInventoryTooltip] = useState({
+    visible: false,
+    x: 0,
+    y: 0,
+    item: null
+  });
 
   // --- Cálculos de Stats (movidos desde Tablero.jsx) ---
   const hpMax = p.hp_maximo || 10;
@@ -25,6 +38,46 @@ export default function PersonajeCard({
   const mpPercent = (p.mp / mpMax) * 100;
   const corduraPercent = (p.cordura / corduraMax) * 100;
   // --------------------------------------------------
+
+  // Cargar inventario cuando se selecciona la pestaña de inventario
+  useEffect(() => {
+    if (activeTab === 'inventory' && !isLoadingInventory) {
+      loadInventory();
+    }
+  }, [activeTab]);
+
+  const loadInventory = async () => {
+    setIsLoadingInventory(true);
+    try {
+      const personajeData = await personajeService.getPersonajeDetails(p.id, 'inventario');
+      setInventory(personajeData.inventario || []);
+    } catch (error) {
+      console.error('Error al cargar inventario:', error);
+      setInventory([]);
+    } finally {
+      setIsLoadingInventory(false);
+    }
+  };
+
+  // Handlers para el tooltip del inventario
+  const handleInventoryMouseEnter = (e, item) => {
+    const rect = e.target.getBoundingClientRect();
+    setInventoryTooltip({
+      visible: true,
+      x: rect.right + 10, // A la derecha del slot
+      y: rect.top,
+      item: item
+    });
+  };
+
+  const handleInventoryMouseLeave = () => {
+    setInventoryTooltip({
+      visible: false,
+      x: 0,
+      y: 0,
+      item: null
+    });
+  };
 
   // Evita que el clic en la pestaña seleccione al personaje
   const handleTabClick = (e, tabName) => {
@@ -75,8 +128,8 @@ export default function PersonajeCard({
             Stats
           </button>
           <button
-            className={`tab-button ${activeTab === 'info' ? 'active' : ''}`}
-            onClick={(e) => handleTabClick(e, 'info')}
+            className={`tab-button ${activeTab === 'weapons' ? 'active' : ''}`}
+            onClick={(e) => handleTabClick(e, 'weapons')}
             disabled={isDead}
           >
             Armas
@@ -87,6 +140,13 @@ export default function PersonajeCard({
             disabled={isDead}
           >
             Hechizos
+          </button>
+          <button
+            className={`tab-button ${activeTab === 'inventory' ? 'active' : ''}`}
+            onClick={(e) => handleTabClick(e, 'inventory')}
+            disabled={isDead}
+          >
+            Inventario
           </button>
         </div>
 
@@ -126,20 +186,135 @@ export default function PersonajeCard({
             </div>
           )}
 
-          {/* --- Pestaña 2: INFO (En blanco) --- */}
-          {activeTab === 'info' && (
+          {/* --- Pestaña 2: ARMAS --- */}
+          {activeTab === 'weapons' && (
             <div className="pj-card-blank">
               <p>Arsenal del personaje...</p>
             </div>
           )}
 
-          {/* --- Pestaña 3: HECHIZOS (En blanco) --- */}
+          {/* --- Pestaña 3: HECHIZOS --- */}
           {activeTab === 'spells' && (
             <div className="pj-card-blank">
               <p>Hechizos conocidos...</p>
             </div>
           )}
+
+          {/* --- Pestaña 4: INVENTARIO --- */}
+          {activeTab === 'inventory' && (
+            <div className="pj-card-inventory">
+              {isLoadingInventory ? (
+                <div className="loading-inventory">
+                  <span>Cargando inventario...</span>
+                </div>
+              ) : inventory.length > 0 ? (
+                <div className="inventory-grid">
+                  {inventory.map((item, index) => (
+                    <div
+                      key={index}
+                      className="inventory-slot"
+                      onMouseEnter={(e) => handleInventoryMouseEnter(e, item)}
+                      onMouseLeave={handleInventoryMouseLeave}
+                    >
+                      <div className="slot-content">
+                        <div className="item-icon">
+                          {item.denominacion ? item.denominacion.charAt(0).toUpperCase() : '?'}
+                        </div>
+                        <div className="item-quantity">{item.pivot?.cantidad || 1}</div>
+                        {item.pivot?.equipado && (
+                          <div className="equipped-indicator">⚡</div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  {/* Rellenar slots vacíos para una cuadrícula uniforme */}
+                  {Array.from({ length: Math.max(0, 12 - inventory.length) }).map((_, index) => (
+                    <div key={`empty-${index}`} className="inventory-slot empty">
+                      <div className="slot-content"></div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="empty-inventory">
+                  <div className="inventory-grid">
+                    {Array.from({ length: 12 }).map((_, index) => (
+                      <div key={`empty-${index}`} className="inventory-slot empty">
+                        <div className="slot-content"></div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="empty-message">Inventario vacío</div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
+
+        {/* --- TOOLTIP PERSONALIZADO PARA INVENTARIO --- */}
+        {inventoryTooltip.visible && inventoryTooltip.item && (
+          <div
+            style={{
+              position: 'fixed',
+              top: `${inventoryTooltip.y}px`,
+              left: `${inventoryTooltip.x}px`,
+              zIndex: 1000,
+
+              // ESTILOS COMPACTOS Y OSCUROS (copiados del tooltip del tablero)
+              backgroundColor: 'rgba(20, 20, 20, 0.98)',
+              color: '#f5f0e6',
+              border: '2px solid #d4af37',
+              padding: '6px 8px',
+              borderRadius: '4px',
+              width: '200px',
+
+              pointerEvents: 'none',
+              boxShadow: '0 4px 8px rgba(0,0,0,0.6)',
+              fontSize: '0.7rem',
+              lineHeight: '1.2',
+              textAlign: 'left',
+              transition: 'opacity 0.2s ease-out'
+            }}
+          >
+            {/* Título: Nombre del objeto */}
+            <div style={{
+              fontWeight: 'bold',
+              fontSize: '0.8rem',
+              color: '#d4af37',
+              marginBottom: '4px',
+              textAlign: 'center'
+            }}>
+              {inventoryTooltip.item.denominacion || 'Objeto'}
+            </div>
+
+            {/* Información del objeto */}
+            <div style={{
+              marginTop: '2px',
+              paddingTop: '2px',
+              borderTop: '1px solid #444',
+              fontSize: '0.7rem'
+            }}>
+              <p><strong>Cantidad:</strong> {inventoryTooltip.item.pivot?.cantidad || 1}</p>
+              <p><strong>Estado:</strong> {inventoryTooltip.item.pivot?.equipado ? 'Equipado ⚡' : 'No equipado'}</p>
+              {inventoryTooltip.item.valor && (
+                <p><strong>Valor:</strong> {inventoryTooltip.item.valor}</p>
+              )}
+            </div>
+
+            {inventoryTooltip.item.descripcion && (
+              <div style={{
+                marginTop: '6px',
+                paddingTop: '4px',
+                borderTop: '1px solid #444',
+                color: '#ccc',
+                maxHeight: '60px',
+                overflowY: 'auto'
+              }}>
+                {inventoryTooltip.item.descripcion}
+              </div>
+            )}
+          </div>
+        )}
+        {/* --- FIN TOOLTIP PERSONALIZADO --- */}
 
       </div>
     </li>

@@ -497,7 +497,7 @@
   font-size: 11px;
   font-weight: bold;
   color: black; /* <-- CAMBIADO A NEGRO */
-  text-shadow: 1px 1px 2px rgba(255,255,255,0.7); /* Sombra clara */
+  text-shadow: 1px 1px 2px rgba(0,255,255,0.7); /* Sombra clara */
   line-height: 20px; /* <-- Centrado vertical */
 }
 
@@ -827,6 +827,124 @@
   border: 1px dashed #6b4c1d;
   border-radius: 5px;
 }
+
+/* Estilos para la pestaña de inventario */
+.pj-card-inventory {
+  width: 100%;
+  max-height: 140px;
+  overflow-y: auto;
+  background: rgba(0, 0, 0, 0.1);
+  border: 1px solid #6b4c1d;
+  border-radius: 5px;
+  padding: 5px;
+}
+
+.loading-inventory {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 60px;
+  font-style: italic;
+  color: #b4956a;
+  font-size: 11px;
+}
+
+.empty-inventory {
+  position: relative;
+}
+
+.empty-message {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-style: italic;
+  color: #b4956a;
+  font-size: 11px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Cuadrícula del inventario */
+.inventory-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 3px;
+  padding: 2px;
+}
+
+.inventory-slot {
+  aspect-ratio: 1;
+  background: rgba(139, 109, 62, 0.15);
+  border: 2px solid rgba(139, 109, 62, 0.3);
+  border-radius: 4px;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: 25px;
+}
+
+.inventory-slot:hover:not(.empty) {
+  background: rgba(139, 109, 62, 0.25);
+  border-color: rgba(139, 109, 62, 0.5);
+  transform: scale(1.05);
+}
+
+.inventory-slot.empty {
+  background: rgba(0, 0, 0, 0.05);
+  border-style: dashed;
+  border-color: rgba(139, 109, 62, 0.2);
+  cursor: default;
+}
+
+.slot-content {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.item-icon {
+  font-size: 14px;
+  font-weight: bold;
+  color: #f4eed5;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+}
+
+.item-quantity {
+  position: absolute;
+  bottom: 1px;
+  right: 2px;
+  font-size: 9px;
+  font-weight: bold;
+  color: #d4af37;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 1px 3px;
+  border-radius: 2px;
+  line-height: 1;
+}
+
+.equipped-indicator {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  font-size: 8px;
+  color: #00ff00;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.equipped-badge {
+  background: #d4af37;
+  color: #2c1810;
+  font-weight: bold;
+  font-size: 9px;
+  padding: 2px 4px;
+  border-radius: 2px;
+  margin-left: 5px;
+  flex-shrink: 0;
+}
 .map-grid-container {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); /* Parrilla responsive */
@@ -879,4 +997,365 @@
 .map-thumbnail.active {
   border-color: #d4af37; /* Borde dorado brillante */
   box-shadow: 0 0 20px 5px #d4af37;
+}
+
+/* Estilos para objetos arrastrables en lista */
+.draggable-object-item {
+  cursor: grab;
+  user-select: none;
+}
+
+.draggable-object-item:active {
+  cursor: grabbing;
+}
+
+.draggable-object-item:hover {
+  transform: translateX(2px);
+}
+
+.object-icon-small {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.object-search-input:focus {
+  border-color: #d4af37;
+  box-shadow: 0 0 5px rgba(212, 175, 55, 0.3);
+}
+
+.object-search-input::placeholder {
+  color: rgba(0, 0, 0, 0.5);
+}
+
+/* Indicador visual cuando se está arrastrando */
+.tablero-mapa.drag-over {
+  border: 3px dashed #d4af37;
+  background-blend-mode: multiply;
+}
+
+/* Estilos para la ficha de personaje en el panel derecho */
+.personaje-ficha-completa {
+  width: 100%;
+}
+
+.personaje-ficha-completa .pj-card {
+  margin-bottom: 0;
+  width: 100%;
+}
+
+.personaje-ficha-completa .pj-card-content {
+  max-height: none; /* Permitir que se expanda completamente */
+}
+
+/* Ajustar el inventario para el panel derecho */
+.personaje-ficha-completa .pj-card-inventory {
+  max-height: 200px; /* Limitar altura para que no ocupe todo el panel */
+}
+
+.personaje-ficha-completa .inventory-grid {
+  grid-template-columns: repeat(3, 1fr); /* Menos columnas para el panel más estrecho */
+}
+
+/* Estilos mejorados para títulos desplegables del panel izquierdo */
+.lista-titulo-desplegable {
+  background: linear-gradient(135deg, rgba(139, 109, 62, 0.3), rgba(107, 76, 29, 0.4));
+  border: 2px solid #8a6d3e;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin: 10px 0 5px 0;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  user-select: none;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.lista-titulo-desplegable::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.lista-titulo-desplegable:hover {
+  background: linear-gradient(135deg, rgba(139, 109, 62, 0.4), rgba(107, 76, 29, 0.5));
+  border-color: #d4af37;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+}
+
+.lista-titulo-desplegable:hover::before {
+  left: 100%;
+}
+
+.lista-titulo-desplegable:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.titulo-desplegable-contenido {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: 'Cinzel Decorative', cursive;
+  font-weight: bold;
+  color: #f4eed5;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+  position: relative;
+  z-index: 1;
+}
+
+.icono-desplegable {
+  font-size: 0.9em;
+  transition: transform 0.3s ease;
+  color: #d4af37;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.lista-titulo-desplegable.abierto .icono-desplegable {
+  transform: rotate(90deg);
+}
+
+.texto-titulo {
+  font-size: 14px;
+  letter-spacing: 0.5px;
+}
+
+/* Animación para el contenido desplegable */
+.contenido-desplegable {
+  overflow: hidden;
+  transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
+}
+
+.contenido-desplegable.cerrado {
+  max-height: 0;
+  opacity: 0;
+}
+
+.contenido-desplegable.abierto {
+  max-height: 400px;
+  opacity: 1;
+}
+
+/* Estilos mejorados para el contenido de los desplegables */
+.lista-scroll-mejorada {
+  background: rgba(245, 240, 230, 0.95);
+  border: 1px solid #d4af37;
+  border-radius: 6px;
+  margin: 5px 0;
+  padding: 8px;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* Estilos para objetos disponibles y mensajes vacíos con texto negro y diseño mejorado */
+.object-search-container {
+    position: relative;
+}
+
+.object-search-input {
+    transition: all 0.3s ease;
+    font-family: 'Goudy Bookletter 1911', serif !important;
+}
+
+.object-search-input:focus {
+    border-color: #d4af37 !important;
+    box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.2) !important;
+}
+
+.object-search-input::placeholder {
+    color: #8a6d3e;
+    opacity: 0.7;
+}
+
+/* Estilos para items de objetos disponibles */
+.objeto-item-mejorado {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(245, 240, 230, 0.9));
+    border: 1px solid #c9aa71;
+    border-radius: 6px;
+    padding: 8px;
+    margin-bottom: 4px;
+    transition: all 0.3s ease;
+    cursor: grab;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    min-height: 70px; /* Altura mínima para que 3 elementos + márgenes = ~240px */
+}
+
+.objeto-item-mejorado:hover {
+    background: linear-gradient(135deg, rgba(212, 175, 55, 0.15), rgba(255, 255, 255, 0.95));
+    border-color: #d4af37;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+}
+
+.objeto-item-mejorado:active {
+    cursor: grabbing;
+    transform: scale(0.98);
+}
+
+/* Estilos para items de personajes disponibles */
+.personaje-item-mejorado {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(245, 240, 230, 0.9));
+    border: 1px solid #c9aa71;
+    border-radius: 6px;
+    padding: 8px;
+    margin-bottom: 4px;
+    transition: all 0.3s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    min-height: 70px; /* Altura mínima consistente con objetos */
+}
+
+.personaje-item-mejorado:hover {
+    background: linear-gradient(135deg, rgba(212, 175, 55, 0.15), rgba(255, 255, 255, 0.95));
+    border-color: #d4af37;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+}
+
+.objeto-info {
+    color: #2c1810;
+}
+
+.objeto-nombre {
+    font-size: 13px;
+    font-weight: bold;
+    color: #1a1a1a;
+    margin-bottom: 2px;
+}
+
+.objeto-valor {
+    font-size: 11px;
+    color: #8a6d3e;
+    font-style: italic;
+    opacity: 0.9;
+}
+
+/* Estilos para información de personajes */
+.personaje-info {
+    color: #2c1810;
+    flex-grow: 1;
+}
+
+.personaje-nombre {
+    font-size: 14px;
+    font-weight: bold;
+    color: #1a1a1a;
+    margin-bottom: 2px;
+}
+
+.personaje-profesion {
+    font-size: 12px;
+    color: #8a6d3e;
+    font-style: italic;
+    opacity: 0.9;
+}
+
+/* Botón mejorado para agregar personajes */
+.agregar-btn-mejorado {
+    background: linear-gradient(135deg, #8a6d3e, #6b4c1d);
+    color: #f5f0e6;
+    border: 1px solid #d4af37;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.agregar-btn-mejorado:hover {
+    background: linear-gradient(135deg, #d4af37, #b8941f);
+    border-color: #f4eed5;
+    transform: scale(1.1);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+}
+
+.agregar-btn-mejorado:active {
+    transform: scale(0.95);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.objeto-icono {
+    font-size: 16px;
+    opacity: 0.8;
+}
+
+.objeto-drag-hint {
+    color: #8a6d3e;
+    font-size: 14px;
+    opacity: 0.6;
+    font-weight: bold;
+    user-select: none;
+    transition: all 0.3s ease;
+}
+
+.objeto-item-mejorado:hover .objeto-drag-hint {
+    opacity: 1;
+    color: #d4af37;
+}
+
+/* Estilos para mensajes de lista vacía */
+.lista-vacia-mensaje {
+    text-align: center;
+    padding: 15px 10px;
+    color: #8a6d3e;
+    font-style: italic;
+    font-size: 12px;
+    opacity: 0.8;
+    background: rgba(245, 240, 230, 0.5);
+    border: 1px dashed #c9aa71;
+    border-radius: 4px;
+    margin: 5px 0;
+}
+
+.lista-vacia-mensaje:empty {
+    display: none;
+}
+
+/* Ajustes para el contenedor scrolleable mejorado */
+.lista-scroll-mejorada {
+    background: rgba(248, 245, 240, 0.98);
+    border: 1px solid #d4af37;
+    border-radius: 6px;
+    margin: 5px 0;
+    padding: 8px;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.15);
+    max-height: 240px; /* Altura fija para mostrar exactamente 3 elementos completos + scroll */
+    overflow-y: auto;
+}
+
+/* Scrollbar personalizada para las listas */
+.lista-scroll-mejorada::-webkit-scrollbar {
+    width: 8px;
+}
+
+.lista-scroll-mejorada::-webkit-scrollbar-track {
+    background: rgba(245, 240, 230, 0.5);
+    border-radius: 4px;
+}
+
+.lista-scroll-mejorada::-webkit-scrollbar-thumb {
+    background: rgba(138, 109, 62, 0.6);
+    border-radius: 4px;
+    transition: background 0.3s ease;
+}
+
+.lista-scroll-mejorada::-webkit-scrollbar-thumb:hover {
+    background: rgba(138, 109, 62, 0.8);
+}
+
+/* Firefox */
+.lista-scroll-mejorada {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(138, 109, 62, 0.6) rgba(245, 240, 230, 0.5);
 }
